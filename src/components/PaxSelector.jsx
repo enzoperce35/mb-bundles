@@ -1,81 +1,49 @@
 import React from 'react';
-import { Users, UsersRound, Home, PartyPopper } from 'lucide-react';
+import { Users, UsersRound, Home, PartyPopper, Utensils, Coffee, Store, Tent } from 'lucide-react';
 
 const PaxSelector = ({ onSelect }) => {
   const categories = [
-    { 
-      id: 'small', 
-      label: 'Family Salo-Salo', 
-      pax: '10-15 Pax', 
-      icon: <Home className="w-8 h-8 text-emerald-800" />,
-      description: 'Perfect for Sunday lunch or small gatherings.'
-    },
-    { 
-        id: 'medium', 
-        label: 'Celebration Set', 
-        pax: '20-30 Pax', 
-        icon: <UsersRound className="w-8 h-8 text-emerald-800" />, // Changed from UserGroup
-        description: 'Ideal for birthdays and office parties.'
-      },
-    { 
-      id: 'large', 
-      label: 'Grand Fiesta', 
-      pax: '50+ Pax', 
-      icon: <PartyPopper className="w-8 h-8 text-emerald-800" />,
-      description: 'The ultimate spread for big events and reunions.'
-    }
+    { id: 5, label: 'Small Salo-Salo', pax: '5 Pax', icon: <Coffee className="w-6 h-6 text-emerald-800" />, desc: 'Intimate meal' },
+    { id: 10, label: 'Family Set', pax: '10 Pax', icon: <Home className="w-6 h-6 text-emerald-800" />, desc: 'Standard family lunch' },
+    { id: 15, label: 'Barkada Pack', pax: '15 Pax', icon: <Utensils className="w-6 h-6 text-emerald-800" />, desc: 'Great for small teams' },
+    { id: 20, label: 'Celebration Set', pax: '20 Pax', icon: <Users className="w-6 h-6 text-emerald-800" />, desc: 'Birthdays & parties' },
+    { id: 25, label: 'Office Feast', pax: '25 Pax', icon: <UsersRound className="w-6 h-6 text-emerald-800" />, desc: 'Corporate lunch' },
+    { id: 30, label: 'Grand Salo-Salo', pax: '30 Pax', icon: <Store className="w-6 h-6 text-emerald-800" />, desc: 'Big family reunions' },
+    { id: 40, label: 'Fiesta Bundle', pax: '40 Pax', icon: <Tent className="w-6 h-6 text-emerald-800" />, desc: 'Barangay celebrations' },
+    { id: 50, label: 'The Ultimate Feast', pax: '50 Pax', icon: <PartyPopper className="w-6 h-6 text-emerald-800" />, desc: 'Maximum celebration' },
   ];
 
   return (
-    <div className="min-h-screen bg-[url('https://images.unsplash.com/photo-1516062423079-7ca13cdc7f5a?q=80&w=2083')] bg-cover bg-fixed bg-center flex flex-col items-center justify-center p-6">
-      {/* Overlay for readability */}
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"></div>
-
-      <div className="relative z-10 w-full max-w-4xl text-center">
-        <h1 className="text-4xl md:text-5xl font-extrabold text-white mb-2 tracking-tight">
+    <div className="min-h-screen bg-wood flex flex-col items-center p-8">
+      <div className="relative z-10 w-full max-w-6xl text-center mt-12">
+        <h1 className="text-4xl font-extrabold text-white mb-2 tracking-tighter drop-shadow-lg">
           MB-BUNDLES
         </h1>
-        <p className="text-emerald-100 text-lg mb-12 font-medium">
-          How many people are we feeding today?
+        <p className="text-emerald-100 text-lg mb-12 font-medium italic">
+          Select your group size to see curated packages
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Responsive Grid: 1 col on mobile, 2 on tablet, 4 on desktop */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {categories.map((cat) => (
             <button
               key={cat.id}
               onClick={() => onSelect(cat.id)}
-              className="group relative overflow-hidden bg-orange-50/90 hover:bg-white transition-all duration-300 rounded-2xl p-8 shadow-2xl border-b-8 border-emerald-900 flex flex-col items-center"
+              className="group relative bg-orange-50/95 hover:bg-white transition-all duration-200 rounded-xl p-6 shadow-xl border-b-4 border-emerald-900 flex flex-col items-center justify-center hover:-translate-y-1"
             >
-              {/* Bamboo Texture Accent */}
-              <div className="absolute top-0 left-0 w-full h-2 bg-[url('https://www.transparenttextures.com/patterns/bamboo.png')] opacity-20"></div>
-              
-              <div className="bg-emerald-100 p-4 rounded-full mb-4 group-hover:scale-110 transition-transform">
+              <div className="bg-emerald-100 p-3 rounded-full mb-3 group-hover:bg-emerald-200 transition-colors">
                 {cat.icon}
               </div>
-              
-              <h3 className="text-xl font-extrabold text-stone-800 uppercase tracking-wider">
+              <h3 className="text-sm font-bold text-stone-500 uppercase tracking-widest mb-1">
                 {cat.label}
               </h3>
-              
-              <span className="mt-2 inline-block bg-emerald-800 text-white px-4 py-1 rounded-full text-sm font-bold">
+              <span className="text-2xl font-extrabold text-stone-800">
                 {cat.pax}
               </span>
-
-              <p className="mt-4 text-stone-600 text-sm leading-relaxed">
-                {cat.description}
-              </p>
-
-              {/* Hover Leaf Decor */}
-              <div className="absolute -bottom-2 -right-2 opacity-10 group-hover:opacity-30 transition-opacity">
-                 <img src="https://cdn-icons-png.flaticon.com/512/892/892926.png" className="w-16 h-16 rotate-12" alt="leaf" />
-              </div>
+              <p className="mt-2 text-xs text-stone-400 font-medium">{cat.desc}</p>
             </button>
           ))}
         </div>
-
-        <button className="mt-12 text-white/80 underline underline-offset-4 hover:text-white transition-colors font-semibold">
-          Just want to add individual items? Click here.
-        </button>
       </div>
     </div>
   );

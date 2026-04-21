@@ -1,0 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;800&display=swap');
+@import "tailwindcss"; /* This is the new v4 way */
+
+/* You can still keep your wood background helper here */
+.bg-wood {
+  background-image: url('https://images.unsplash.com/photo-1516062423079-7ca13cdc7f5a?q=80&w=2083');
+  background-size: cover;
+  background-attachment: fixed;
+}
