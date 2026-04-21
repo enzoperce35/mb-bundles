@@ -1,15 +1,21 @@
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import PaxSelector from './components/PaxSelector';
+import BundleBuilder from './pages/BundleBuilder';
+import BundleList from './pages/BundleList';
 
 function App() {
-  const handlePaxSelect = (id) => {
-    console.log("Selected Category:", id);
-    // Logic to navigate to the Bundle List for this category
-  };
-
   return (
-    <div className="App">
-      <PaxSelector onSelect={handlePaxSelect} />
-    </div>
+    <Router>
+      <Routes>
+        {/* The link for your customers */}
+        <Route path="/" element={<PaxSelector />} />
+        
+        {/* Your secret link to build bundles */}
+        <Route path="/admin/builder" element={<BundleBuilder />} />
+
+        <Route path="/bundles" element={<BundleList />} />
+      </Routes>
+    </Router>
   );
 }
 
