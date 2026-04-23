@@ -3,10 +3,20 @@ import { Plus, Trash2, Save, Package, Clock, Users, Search, ChevronLeft } from '
 import { HARDCODED_PANTRY } from '../constants/bundleMenu';
 import { useNavigate } from 'react-router-dom';
 
+const flattenPantry = (pantry) => {
+  return pantry.flatMap(product =>
+    (product.variants || []).map(variant => ({
+      ...variant,
+      product_name: product.product_name,
+      rails_parent_id: product.rails_parent_id
+    }))
+  );
+};
+
 const BundleBuilder = () => {
   const navigate = useNavigate();
+  const flatPantry = React.useMemo(() => flattenPantry(HARDCODED_PANTRY), []);
 
-  // 1. Bundle State - Explicitly adding shop_id: 1
   const [bundle, setBundle] = useState({
     name: '',
     price: '',
@@ -21,7 +31,6 @@ const BundleBuilder = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loadingPrices, setLoadingPrices] = useState(true);
 
-  // Fetch real prices from Rails for Shop 1
   useEffect(() => {
     const fetchPrices = async () => {
       try {
@@ -59,7 +68,7 @@ const BundleBuilder = () => {
 
   const calculateItemTotal = (item) => {
     const unitPrice = getItemPrice(item.rails_variant_id);
-    const unitPax = parseInt(item.pax) || 0;
+    const unitPax = parseFloat(item.pax) || 0; // Use parseFloat for 2.5 pax values
     return {
       totalPax: unitPax * item.quantity,
       totalPrice: unitPrice * item.quantity
@@ -107,8 +116,10 @@ const BundleBuilder = () => {
     }));
   };
 
-  const filteredPantry = HARDCODED_PANTRY.filter(item => 
-    item.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredPantry = flatPantry.filter(item => 
+    item.mb_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.product_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleSaveBundle = async () => {
@@ -117,7 +128,6 @@ const BundleBuilder = () => {
       return;
     }
 
-    // Payload formatted to include shop_id to ensure Rails validation passes
     const payload = {
       bundle: {
         name: bundle.name,
@@ -125,12 +135,11 @@ const BundleBuilder = () => {
         min_pax: bundle.min_pax,
         max_pax: bundle.max_pax,
         lead_time_days: bundle.lead_time_days,
-        shop_id: 1, // Explicitly tell Rails this is for Shop 1
+        shop_id: 1, 
         active: true,
         bundle_items_attributes: bundle.items.map(item => ({
           product_variant_id: item.rails_variant_id,
           quantity: item.quantity
-          // product_id is handled by our before_validation in Rails!
         }))
       }
     };
@@ -143,14 +152,14 @@ const BundleBuilder = () => {
       });
 
       if (response.ok) {
-        alert("Mabuhay! Your Shop 1 bundle is now live.");
+        alert("Mabuhay! Your bundle is now live.");
         navigate('/bundles');
       } else {
         const errorData = await response.json();
         alert(`Save failed: ${errorData.errors?.join(", ") || "Unknown Error"}`);
       }
     } catch (err) {
-      alert("Connection error. Is the backend pushed to GitHub?");
+      alert("Connection error.");
     }
   };
 
@@ -241,20 +250,24 @@ const BundleBuilder = () => {
                       {bundle.items.map((item) => {
                         const { totalPax, totalPrice } = calculateItemTotal(item);
                         const unitPrice = getItemPrice(item.rails_variant_id);
+                        // Rounded display for pax
+                        const displayPax = Math.ceil(totalPax);
+
                         return (
                           <div key={item.rails_variant_id} className="flex items-center justify-between bg-white p-5 rounded-2xl shadow-sm border-l-8 border-emerald-600">
-                            <div>
-                              <p className="font-black text-stone-800 Montserrat leading-none mb-1 text-sm uppercase">{item.name}</p>
+                            <div className="flex-grow">
+                              {/* Using mb_name (Backend Name) */}
+                              <p className="font-black text-stone-800 Montserrat leading-none mb-1 text-sm uppercase">{item.mb_name}</p>
                               <p className="text-[10px] uppercase font-bold text-emerald-600 Montserrat">
-                                {item.pax ? `${totalPax} Pax Total` : 'Add-on'} • 
-                                <span className="text-stone-400 ml-1">(₱{unitPrice} x {item.quantity})</span> = ₱{totalPrice.toLocaleString()}
+                                {item.pax ? `${displayPax} Pax | ` : ''}
+                                ₱{unitPrice} x {item.quantity} = ₱{totalPrice.toLocaleString()}
                               </p>
                             </div>
                             <div className="flex items-center gap-6">
                               <div className="flex items-center bg-stone-100 rounded-xl p-1 px-3 gap-4">
                                 <button onClick={() => updateItemQuantity(item.rails_variant_id, item.quantity - 1)} className="text-stone-400 hover:text-emerald-600 font-bold">-</button>
                                 <span className="font-black text-stone-800 Montserrat text-sm">{item.quantity}</span>
-                                <button onClick={() => addItemToBundle(item)} className="text-stone-400 hover:text-emerald-600 font-bold">+</button>
+                                <button onClick={() => updateItemQuantity(item.rails_variant_id, item.quantity + 1)} className="text-stone-400 hover:text-emerald-600 font-bold">+</button>
                               </div>
                               <button onClick={() => removeItem(item.rails_variant_id)} className="p-2 text-stone-300 hover:text-red-500 transition-colors"><Trash2 size={18} /></button>
                             </div>
@@ -298,8 +311,9 @@ const BundleBuilder = () => {
                   className="w-full group flex items-center justify-between p-4 rounded-2xl bg-stone-800/40 hover:bg-emerald-600/20 border border-stone-700/50 hover:border-emerald-500/50 transition-all text-left mb-2"
                 >
                   <div>
+                    {/* Using mb_name (Backend Name) in Sidebar */}
                     <p className="text-stone-100 font-bold Montserrat text-sm group-hover:text-emerald-400 transition-colors uppercase">
-                      {item.name}
+                      {item.mb_name}
                     </p>
                     <div className="flex gap-2 mt-1">
                       {item.pax && (
