@@ -55,7 +55,7 @@ export const HARDCODED_PANTRY = [
     rails_parent_id: 48,
     public_id: 'dddndsrtzhs662weak9t',
     variants: [
-      { name: "Set Fish Fillet", mb_name: "Fish Fillet Solo", price: 130, rails_variant_id: 182, pax: 3 },
+      { name: "Set Fish Fillet", mb_name: "Fish Fillet Solo", price: 130, rails_variant_id: 182, pax: 2.5 },
     ]
   },
   {
@@ -74,6 +74,7 @@ export const HARDCODED_PANTRY = [
     rails_parent_id: 41,
     public_id: 'uhvfixjj9y5dppzthrp8',
     variants: [
+      { name: "Small Bilao Carbonara", mb_name: "Carbonara Small", rails_variant_id: 194, price: 350, pax: 5, main: true },
       { name: "Medium Bilao Carbonara", mb_name: "Carbonara Medium", rails_variant_id: 4, price: 550, pax: 10, main: true },
       { name: "Large Bilao Carbonara", mb_name: "Carbonara Large", rails_variant_id: 5, price: 750, pax: 15, main: true },
       { name: "XL Bilao Carbonara", mb_name: "Carbonara XL", rails_variant_id: 6, price: 950, pax: 20, main: true },
@@ -84,6 +85,7 @@ export const HARDCODED_PANTRY = [
     rails_parent_id: 40,
     public_id: 'vhsxygqxkxvwfr3oddfy',
     variants: [
+      { name: "Small Bilao Spaghetti", mb_name: "Spaghetti Small", rails_variant_id: 195, price: 350, pax: 5, main: true },
       { name: "Medium Bilao Spaghetti", mb_name: "Spaghetti Medium", rails_variant_id: 1, price: 550, pax: 10, main: true },
       { name: "Large Bilao Spaghetti", mb_name: "Spaghetti Large", rails_variant_id: 2, price: 750, pax: 15, main: true },
       { name: "XL Bilao Spaghetti", mb_name: "Spaghetti XL", rails_variant_id: 3, price: 950, pax: 20, main: true },
@@ -94,6 +96,7 @@ export const HARDCODED_PANTRY = [
     rails_parent_id: 39,
     public_id: 'b9jpxf0zj6hyg656ijwe',
     variants: [
+      { name: "Small Bilao Palabok", mb_name: "Palabok Small", rails_variant_id: 193, price: 300, pax: 5, main: true },
       { name: "Medium Bilao Palabok", mb_name: "Palabok Medium", rails_variant_id: 7, price: 500, pax: 10, main: true },
       { name: "Large Bilao Palabok", mb_name: "Palabok Large", rails_variant_id: 8, price: 700, pax: 15, main: true },
       { name: "XL Bilao Palabok", mb_name: "Palabok XL", rails_variant_id: 9, price: 850, pax: 20, main: true },
