@@ -2,72 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { HARDCODED_PANTRY } from '../constants/bundleMenu';
 import { Clock, Users, ChevronLeft, ShoppingBag, Leaf, Share2, X, Download, MessageSquare } from 'lucide-react';
+import ShareModal from '../components/ShareModal';
 
 const flattenPantry = (pantry) => {
   return pantry.flatMap(product =>
     (product.variants || []).map(variant => ({
       ...variant,
       product_name: product.product_name,
-      rails_parent_id: product.rails_parent_id
+      rails_parent_id: product.rails_parent_id,
+      public_id: product.public_id // ✅ IMPORTANT
     }))
-  );
-};
-
-// --- Share Modal Component ---
-const ShareModal = ({ isOpen, onClose, bundle }) => {
-  if (!isOpen || !bundle) return null;
-
-  const CLOUD_NAME = "dvgveqqtj";
-  const VERSION = "v1776740367";
-  const PUBLIC_ID = "mb_bundles_template_wood";
-  const baseUrl = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/`;
-
-  // 1. Clean the price (remove commas/decimals for the URL string to be safe)
-  const cleanPrice = Math.round(parseFloat(bundle.price));
-  const cleanName = encodeURIComponent(bundle.name);
-
-  // 2. THE ONE-BLOCK STRATEGY
-  // We put everything in one section to avoid "layer apply" errors
-  // Format: l_text:[font]:[text],[options]/[more_options]
-  const transformations = [
-    "w_1536,h_1024,c_fill",
-    `l_text:Arial_80_bold:${cleanName},co_rgb:ffffff,g_north,y_150`,
-    `l_text:Arial_120_bold:PHP%20${cleanPrice},co_rgb:10b981,g_center,y_50`,
-    `l_text:Arial_40_bold:2-DAY%20LEAD%20TIME,co_rgb:f97316,g_south,y_100`
-  ].join("/");
-
-  // 3. THE URL CONSTRUCTION
-  // Note: We are using the VERSION provided in your working link
-  const posterUrl = `https://res.cloudinary.com/${CLOUD_NAME}/image/upload/${transformations}/${VERSION}/${PUBLIC_ID}.png`;
-
-  return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      <div className="relative bg-stone-900 rounded-3xl max-w-lg w-full overflow-hidden border border-white/10 shadow-2xl">
-        <div className="p-4 flex justify-between items-center border-b border-white/5">
-          <h3 className="text-white font-black uppercase text-[10px] tracking-widest">Shareable Menu Poster</h3>
-          <button onClick={onClose} className="text-stone-400 hover:text-white"><X size={20} /></button>
-        </div>
-        <div className="p-6">
-          <div className="bg-stone-800 rounded-2xl aspect-[3/2] overflow-hidden shadow-inner border border-white/5 flex items-center justify-center">
-            <img
-              src={posterUrl}
-              alt="Poster Preview"
-              className="w-full h-full object-contain"
-              onError={(e) => {
-                e.target.onerror = null; // Stops the infinite load
-                e.target.src = "https://via.placeholder.com/1536x1024?text=Check+Console+for+URL";
-                console.log("Failed URL:", posterUrl);
-              }}
-            />
-          </div>
-        </div>
-        <div className="p-6 bg-stone-950/50 flex flex-col gap-3">
-          <a href={posterUrl} target="_blank" rel="noreferrer" className="w-full bg-emerald-800 hover:bg-emerald-700 text-white py-4 rounded-xl font-black uppercase text-xs flex items-center justify-center gap-2 transition-all">
-            <Download size={18} /> View Poster
-          </a>
-        </div>
-      </div>
-    </div>
   );
 };
 
@@ -163,7 +107,7 @@ const BundleList = () => {
                         const pantryItem = pantryMap[bi.product_variant_id];
 
                         const quantity = bi.quantity || 1;
-                        const itemName = pantryItem?.mb_name || bi.product?.name || 'Item';
+                        const itemName = pantryItem?.name|| bi.product?.name || 'Item';
 
                         let displayName = "";
 
@@ -214,6 +158,7 @@ const BundleList = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         bundle={selectedBundle}
+        pantryMap={pantryMap}
       />
     </div>
   );
