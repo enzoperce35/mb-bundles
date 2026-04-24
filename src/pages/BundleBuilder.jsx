@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, Trash2, Save, Package, Clock, Users, Search, ChevronLeft } from 'lucide-react';
 import { HARDCODED_PANTRY } from '../constants/bundleMenu';
 import { useNavigate } from 'react-router-dom';
@@ -15,7 +15,7 @@ const flattenPantry = (pantry) => {
 
 const BundleBuilder = () => {
   const navigate = useNavigate();
-  const flatPantry = React.useMemo(() => flattenPantry(HARDCODED_PANTRY), []);
+  const flatPantry = useMemo(() => flattenPantry(HARDCODED_PANTRY), []);
 
   const [bundle, setBundle] = useState({
     name: '',
@@ -31,12 +31,22 @@ const BundleBuilder = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loadingPrices, setLoadingPrices] = useState(true);
 
+  // 1. INITIALIZE PRICE MAP FROM HARDCODED_PANTRY IMMEDIATELY
   useEffect(() => {
+    const initialMapping = {};
+    flatPantry.forEach(item => {
+      if (item.rails_variant_id) {
+        initialMapping[item.rails_variant_id.toString()] = Number(item.price || 0);
+      }
+    });
+    setPriceMap(initialMapping);
+
+    // 2. THEN FETCH LIVE PRICES TO OVERWRITE IF NECESSARY
     const fetchPrices = async () => {
       try {
         const response = await fetch('https://servewise-market-backend.onrender.com/api/v1/products?shop_id=1&admin_mode=true');
         const data = await response.json();
-        const mapping = {};
+        const liveMapping = { ...initialMapping }; // Keep hardcoded as base
   
         const allProducts = Array.isArray(data[0]?.products) 
           ? data.flatMap(g => g.products) 
@@ -46,20 +56,20 @@ const BundleBuilder = () => {
           const variants = product.product_variants || product.variants || [];
           variants.forEach(v => {
             if (v.id) {
-              mapping[v.id.toString()] = Number(v.price);
+              liveMapping[v.id.toString()] = Number(v.price);
             }
           });
         });
   
-        setPriceMap(mapping);
+        setPriceMap(liveMapping);
         setLoadingPrices(false);
       } catch (err) {
-        console.error("❌ FETCH ERROR:", err);
+        console.error("❌ FETCH ERROR (Using hardcoded as fallback):", err);
         setLoadingPrices(false);
       }
     };
     fetchPrices();
-  }, []);
+  }, [flatPantry]);
 
   const getItemPrice = (variantId) => {
     if (!variantId || !priceMap) return 0;
@@ -68,7 +78,7 @@ const BundleBuilder = () => {
 
   const calculateItemTotal = (item) => {
     const unitPrice = getItemPrice(item.rails_variant_id);
-    const unitPax = parseFloat(item.pax) || 0; // Use parseFloat for 2.5 pax values
+    const unitPax = parseFloat(item.pax) || 0;
     return {
       totalPax: unitPax * item.quantity,
       totalPrice: unitPrice * item.quantity
@@ -139,7 +149,9 @@ const BundleBuilder = () => {
         active: true,
         bundle_items_attributes: bundle.items.map(item => ({
           product_variant_id: item.rails_variant_id,
-          quantity: item.quantity
+          quantity: item.quantity,
+          // Sending price ensures the snapshot is captured correctly
+          price: getItemPrice(item.rails_variant_id) 
         }))
       }
     };
@@ -196,7 +208,7 @@ const BundleBuilder = () => {
                   />
                 </div>
                 <div className="flex flex-col">
-                  <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2 Montserrat">Bundle Price (₱)</label>
+                  <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2 Montserrat">Selling Price (₱)</label>
                   <input
                     type="number"
                     className="bg-white border-2 border-stone-200 rounded-xl px-4 py-4 focus:border-emerald-600 outline-none transition-all font-black text-emerald-800 text-xl Montserrat"
@@ -232,7 +244,7 @@ const BundleBuilder = () => {
                 <div className="flex justify-between items-end mb-4">
                   <h3 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] Montserrat">Included in Bundle</h3>
                   <div className="text-right">
-                    <p className="text-[9px] font-black text-emerald-600 uppercase Montserrat tracking-widest">Total Inventory Value</p>
+                    <p className="text-[9px] font-black text-emerald-600 uppercase Montserrat tracking-widest">Total Cost of Items</p>
                     <p className="text-xl font-black text-stone-800 Montserrat">
                       ₱{bundle.items.reduce((acc, item) => acc + calculateItemTotal(item).totalPrice, 0).toLocaleString()}
                     </p>
@@ -250,13 +262,11 @@ const BundleBuilder = () => {
                       {bundle.items.map((item) => {
                         const { totalPax, totalPrice } = calculateItemTotal(item);
                         const unitPrice = getItemPrice(item.rails_variant_id);
-                        // Rounded display for pax
                         const displayPax = Math.ceil(totalPax);
 
                         return (
                           <div key={item.rails_variant_id} className="flex items-center justify-between bg-white p-5 rounded-2xl shadow-sm border-l-8 border-emerald-600">
                             <div className="flex-grow">
-                              {/* Using mb_name (Backend Name) */}
                               <p className="font-black text-stone-800 Montserrat leading-none mb-1 text-sm uppercase">{item.mb_name}</p>
                               <p className="text-[10px] uppercase font-bold text-emerald-600 Montserrat">
                                 {item.pax ? `${displayPax} Pax | ` : ''}
@@ -311,7 +321,6 @@ const BundleBuilder = () => {
                   className="w-full group flex items-center justify-between p-4 rounded-2xl bg-stone-800/40 hover:bg-emerald-600/20 border border-stone-700/50 hover:border-emerald-500/50 transition-all text-left mb-2"
                 >
                   <div>
-                    {/* Using mb_name (Backend Name) in Sidebar */}
                     <p className="text-stone-100 font-bold Montserrat text-sm group-hover:text-emerald-400 transition-colors uppercase">
                       {item.mb_name}
                     </p>
