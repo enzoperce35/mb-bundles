@@ -3,7 +3,8 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { HARDCODED_PANTRY } from '../constants/bundleMenu';
 import { Clock, Users, ChevronLeft, ShoppingBag, Share2, Edit3, Save, RotateCcw, Check } from 'lucide-react';
 import { getEditableVariants, calculateSmartQuantity, formatItemName } from '../utils/bundleLogic';
-import ShareModal from '../components/ShareModal';
+import * as htmlToImage from 'html-to-image';
+import PosterTemplate from '../components/PosterTemplate';
 
 const flattenPantry = (pantry) => {
   return pantry.flatMap(product =>
@@ -24,8 +25,9 @@ const BundleList = () => {
   const [bundles, setBundles] = useState([]);
   const [allProducts, setAllProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+
   const [selectedBundle, setSelectedBundle] = useState(null);
+  const [generatingId, setGeneratingId] = useState(null);
 
   const [editingId, setEditingId] = useState(null);
   const [customSelections, setCustomSelections] = useState({});
@@ -143,6 +145,45 @@ const BundleList = () => {
     setEditingId(null);
   };
 
+  const handleDownloadPoster = async (bundle) => {
+    const displayBundle = {
+      ...bundle,
+      bundle_items: customSelections[bundle.id] || bundle.bundle_items || []
+    };
+
+    setSelectedBundle(displayBundle);
+    setGeneratingId(bundle.id);
+
+    // ✅ Wait for React render properly
+    requestAnimationFrame(async () => {
+      requestAnimationFrame(async () => {
+        const node = document.getElementById('ma-donna-poster-final');
+        if (!node) {
+          console.error("Poster node not found");
+          setGeneratingId(null);
+          return;
+        }
+
+        try {
+          const dataUrl = await htmlToImage.toPng(node, {
+            pixelRatio: 2,
+            cacheBust: true,
+            useCORS: true
+          });
+
+          const link = document.createElement('a');
+          link.download = `MaDonna_${bundle.name.replace(/\s+/g, '_')}.png`;
+          link.href = dataUrl;
+          link.click();
+        } catch (err) {
+          console.error("Download failed:", err);
+        } finally {
+          setGeneratingId(null);
+        }
+      });
+    });
+  };
+
   return (
     <div className="min-h-screen bg-[url('https://images.unsplash.com/photo-1516062423079-7ca13cdc7f5a?q=80&w=2083')] bg-cover bg-fixed p-6 font-sans">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
@@ -197,10 +238,12 @@ const BundleList = () => {
                       </button>
 
                       <button
-                        onClick={() => { setSelectedBundle(displayBundle); setIsModalOpen(true); }}
-                        className="flex items-center gap-1 text-stone-400 hover:text-emerald-700 font-bold text-[10px] uppercase tracking-widest transition-colors"
+                        onClick={() => handleDownloadPoster(bundle)}
+                        disabled={generatingId === bundle.id}
+                        className="flex items-center gap-2 text-sm"
                       >
-                        <Share2 size={16} /> Share Poster
+                        <Share2 size={16} />
+                        {generatingId === bundle.id ? "Generating..." : "Download Poster"}
                       </button>
                     </div>
 
@@ -300,12 +343,14 @@ const BundleList = () => {
         )}
       </div>
 
-      <ShareModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        bundle={selectedBundle}
-        pantryMap={pantryMap}
-      />
+      {/* ✅ HIDDEN POSTER RENDER (REQUIRED FOR DOWNLOAD) */}
+      <div style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
+        {selectedBundle && (
+          <div id="ma-donna-poster-final">
+            <PosterTemplate bundle={selectedBundle} pantryMap={pantryMap} />
+          </div>
+        )}
+      </div>
     </div>
   );
 };
