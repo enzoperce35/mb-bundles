@@ -4,7 +4,7 @@ export const HARDCODED_PANTRY = [
     rails_parent_id: 43,
     public_id: 'tls60wkpjkyqzkyb0rc3',
     variants: [
-      { name: "Steamed Siomai", mb_name: "Steamed Siomai Tub Spicy", rails_variant_id: 20, price: 100, pax: 3, count: 12 },
+      { name: "Steamed Siomai", mb_name: "Steamed Siomai Tub Spicy", rails_variant_id: 20, price: 100, pax: 3.5, count: 12 },
     ]
   },
   {
@@ -28,7 +28,7 @@ export const HARDCODED_PANTRY = [
     rails_parent_id: 23,
     public_id: 'tswlxicsjvgewknlibdq',
     variants: [
-      { name: "Empanada", mb_name: "Empanada 5pcs", rails_variant_id: 68, price: 100, pax: 2.5, count: 5 },
+      { name: "Empanada", mb_name: "Empanada 5pcs", rails_variant_id: 68, price: 100, pax: 3, count: 5 },
     ]
   },
   {
@@ -47,7 +47,7 @@ export const HARDCODED_PANTRY = [
     rails_parent_id: 68,
     public_id: 'jq4njje4jyhhslp8umsh',
     variants: [
-      { name: "Shanghai", mb_name: "Shanghai 24pcs", rails_variant_id: 104, price: 170, pax: 7, count: 24 },
+      { name: "Shanghai", mb_name: "Shanghai 24pcs", rails_variant_id: 104, price: 170, pax: 5, count: 24 },
     ]
   },
   {
@@ -55,7 +55,7 @@ export const HARDCODED_PANTRY = [
     rails_parent_id: 48,
     public_id: 'dddndsrtzhs662weak9t',
     variants: [
-      { name: "Set Fish Fillet", mb_name: "Fish Fillet Solo", price: 130, rails_variant_id: 182, pax: 2.5 },
+      { name: "Set Fish Fillet", mb_name: "Fish Fillet Solo", price: 130, rails_variant_id: 182, pax: 2.7 },
     ]
   },
   {
@@ -63,10 +63,7 @@ export const HARDCODED_PANTRY = [
     rails_parent_id: 15,
     public_id: 'dnox9od3tjhz0swrut7j',
     variants: [
-      { name: "Puto", mb_name: "Puto Small 25pcs", rails_variant_id: 41, price: 200, pax: 12, count: 25 },
-      { name: "Puto", mb_name: "Puto Medium 40pcs", rails_variant_id: 42, price: 300, pax: 20, count: 40 },
-      { name: "Puto", mb_name: "Puto Large 50pcs", rails_variant_id: 43, price: 370, pax: 25, count: 50 },
-      { name: "Puto", mb_name: "Puto XL 75pcs", rails_variant_id: 44, price: 550, pax: 40, count: 75 },
+      { name: "Puto", mb_name: "Puto Mini 15pcs", rails_variant_id: 197, price: 120, pax: 6, count: 15 },
     ]
   },
   {
