@@ -106,30 +106,36 @@ const BundleList = () => {
 
   const handleToggleItem = (bundle, variantId) => {
     const variantData = pantryMap[variantId];
-
+  
     // 🚫 BLOCK if main item
     if (!variantData || variantData.main) return;
-
+  
     const bundleId = bundle.id;
-
+  
     setCustomSelections(prev => {
       const currentItems = prev[bundleId] || bundle.bundle_items;
       const exists = currentItems.find(i => i.product_variant_id === variantId);
-
+  
+      // 🛑 MINIMUM CHECK: If item exists (trying to uncheck) and count is <= 3, block it.
+      if (exists && currentItems.length <= 3) {
+        alert("Selection must have at least 3 items."); // Optional: UI feedback
+        return prev;
+      }
+  
       let newItems;
       if (exists) {
         newItems = currentItems.filter(i => i.product_variant_id !== variantId);
       } else {
         const smartQty = calculateSmartQuantity(variantData?.pax, bundle.max_pax);
-
         newItems = [...currentItems, {
           product_variant_id: variantId,
           quantity: smartQty,
           price: variantData?.price || 0
         }];
       }
-
+  
       const updated = { ...prev, [bundleId]: newItems };
+      // ✅ REMEMBER SELECTION: Saves to local storage for future interactions
       localStorage.setItem('servewise_bundle_customizations', JSON.stringify(updated));
       return updated;
     });
@@ -231,7 +237,7 @@ const BundleList = () => {
                     <div className="flex justify-between items-start mb-4 Montserrat">
                       <button
                         onClick={() => setEditingId(isEditing ? null : bundle.id)}
-                        className={`flex items-center gap-2 text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest transition-all ${isEditing ? 'bg-orange-600 text-white animate-pulse' : 'bg-emerald-800 text-white hover:bg-emerald-700'}`}
+                        className={`flex items-center gap-2 text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest transition-all ${isEditing ? 'bg-orange-600 text-white animate-pulse' : 'bg-emerald-800 text-white hover:bg-emerald-700'}`}
                       >
                         {isEditing ? <Save size={12} /> : <Edit3 size={12} />}
                         {isEditing ? 'Finish Editing' : 'Edit Inclusions'}
@@ -240,17 +246,25 @@ const BundleList = () => {
                       <button
                         onClick={() => handleDownloadPoster(bundle)}
                         disabled={generatingId === bundle.id}
-                        className="flex items-center gap-2 text-sm"
+                        className="group flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-stone-500 hover:text-emerald-700 transition-colors"
                       >
-                        <Share2 size={16} />
-                        {generatingId === bundle.id ? "Generating..." : "Download Poster"}
+                        <Share2 size={14} className="group-hover:rotate-12 transition-transform" />
+                        {generatingId === bundle.id ? "Processing..." : "Export Poster"}
                       </button>
                     </div>
 
                     <h2 className="text-3xl font-black text-stone-800 tracking-tighter leading-none mb-2 uppercase Montserrat">{bundle.name}</h2>
                     <div className="flex items-center gap-4 Montserrat">
-                      <p className="text-stone-400 font-bold text-xs uppercase flex items-center gap-1.5"><Users size={14} /> {bundle.min_pax}-{bundle.max_pax} Pax</p>
-                      <p className="text-orange-700 font-bold text-xs uppercase flex items-center gap-1.5"><Clock size={14} /> {bundle.lead_time_days || 2} Days</p>
+                      <p className="text-stone-400 font-bold text-xs uppercase flex items-center gap-1.5">
+                        <Users size={14} />
+                        {bundle.min_pax === bundle.max_pax
+                          ? `${bundle.max_pax} Pax`
+                          : `${bundle.min_pax}-${bundle.max_pax} Pax`
+                        }
+                      </p>
+                      <p className="text-orange-700 font-bold text-xs uppercase flex items-center gap-1.5">
+                        <Clock size={14} /> {bundle.lead_time_days || 2} Days
+                      </p>
                     </div>
                   </div>
 
@@ -331,7 +345,7 @@ const BundleList = () => {
                           })}
                         </span>
                       </div>
-                      <button className="bg-emerald-800 hover:bg-emerald-900 text-white px-6 py-4 rounded-2xl font-black tracking-widest uppercase text-sm shadow-lg flex items-center gap-2 transition-all active:scale-95">
+                      <button className="bg-emerald-800 hover:bg-emerald-900 text-white px-3 py-4 rounded-2xl font-black tracking-widest uppercase text-xs shadow-lg flex items-center gap-2 transition-all active:scale-95">
                         <ShoppingBag size={18} /> Order Now
                       </button>
                     </div>
