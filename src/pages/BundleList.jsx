@@ -16,7 +16,7 @@ const flattenPantry = (pantry) => {
     }))
   );
 };
-
+//bundles.map
 const BundleList = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -106,6 +106,7 @@ const BundleList = () => {
 
   const handleToggleItem = (bundle, variantId) => {
     const variantData = pantryMap[variantId];
+    const minItems = bundle.max_pax === 5 ? 3 : 2;
   
     // 🚫 BLOCK if main item
     if (!variantData || variantData.main) return;
@@ -117,8 +118,8 @@ const BundleList = () => {
       const exists = currentItems.find(i => i.product_variant_id === variantId);
   
       // 🛑 MINIMUM CHECK: If item exists (trying to uncheck) and count is <= 3, block it.
-      if (exists && currentItems.length <= 3) {
-        alert("Selection must have at least 3 items."); // Optional: UI feedback
+      if (exists && currentItems.length <= minItems) {
+        alert(`Selection must have at least ${minItems} items.`);
         return prev;
       }
   
@@ -152,15 +153,27 @@ const BundleList = () => {
   };
 
   const handleDownloadPoster = async (bundle) => {
+    const activeItems = customSelections[bundle.id] || bundle.bundle_items || [];
+  
+    // ✅ SORT SAME AS UI (main first)
+    const sortedItems = [...activeItems].sort((a, b) => {
+      const itemA = pantryMap[a.product_variant_id];
+      const itemB = pantryMap[b.product_variant_id];
+  
+      const isMainA = itemA?.main ? 1 : 0;
+      const isMainB = itemB?.main ? 1 : 0;
+  
+      return isMainB - isMainA;
+    });
+  
     const displayBundle = {
       ...bundle,
-      bundle_items: customSelections[bundle.id] || bundle.bundle_items || []
+      bundle_items: sortedItems
     };
-
+  
     setSelectedBundle(displayBundle);
     setGeneratingId(bundle.id);
-
-    // ✅ Wait for React render properly
+  
     requestAnimationFrame(async () => {
       requestAnimationFrame(async () => {
         const node = document.getElementById('ma-donna-poster-final');
@@ -169,14 +182,14 @@ const BundleList = () => {
           setGeneratingId(null);
           return;
         }
-
+  
         try {
           const dataUrl = await htmlToImage.toPng(node, {
             pixelRatio: 2,
             cacheBust: true,
             useCORS: true
           });
-
+  
           const link = document.createElement('a');
           link.download = `MaDonna_${bundle.name.replace(/\s+/g, '_')}.png`;
           link.href = dataUrl;
@@ -216,9 +229,20 @@ const BundleList = () => {
 
               const displayBundle = { ...bundle, bundle_items: activeItems };
               const smartSidesForThisBundle = smartSidesMap[bundle.id] || [];
-              const itemsToShow = isEditing
-                ? [...new Set([...activeIds, ...smartSidesForThisBundle.map(v => v.rails_variant_id)])]
-                : activeIds;
+              const itemsToShowRaw = isEditing
+  ? [...new Set([...activeIds, ...smartSidesForThisBundle.map(v => v.rails_variant_id)])]
+  : activeIds;
+
+// ✅ SORT: main items first
+const itemsToShow = itemsToShowRaw.sort((a, b) => {
+  const itemA = pantryMap[a];
+  const itemB = pantryMap[b];
+
+  const isMainA = itemA?.main ? 1 : 0;
+  const isMainB = itemB?.main ? 1 : 0;
+
+  return isMainB - isMainA; // main=true goes first
+});
 
               // CALCULATION: Recalculate on every toggle
               const currentTotalPrice = activeItems.reduce((acc, item) => {
