@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import PaxSelector from './components/PaxSelector';
 import BundleBuilder from './pages/BundleBuilder';
 import BundleList from './pages/BundleList';
+import EditBundle from './pages/BundleEditor';
 
 function App() {
   return (
@@ -14,6 +15,8 @@ function App() {
         <Route path="/admin/builder" element={<BundleBuilder />} />
 
         <Route path="/bundles" element={<BundleList />} />
+
+        <Route path="/admin/editor/:id" element={<EditBundle />} />
       </Routes>
     </Router>
   );
