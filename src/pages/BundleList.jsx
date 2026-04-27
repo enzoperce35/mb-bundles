@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { HARDCODED_PANTRY } from '../constants/bundleMenu';
-import { Clock, Users, ChevronLeft, ShoppingBag, Share2, Edit3, Save, RotateCcw, Check } from 'lucide-react';
+import { Clock, Users, ChevronLeft, MessageCircle, Share2, Edit3, Save, RotateCcw, Check } from 'lucide-react';
 import { getEditableVariants, calculateSmartQuantity, formatItemName } from '../utils/bundleLogic';
 import * as htmlToImage from 'html-to-image';
 import PosterTemplate from '../components/PosterTemplate';
@@ -170,14 +170,14 @@ const BundleList = () => {
 
     const rawTotal = sortedItems.reduce((acc, item) => {
       const pMapInfo = pantryMap[item.product_variant_id];
-    
+
       const unitPrice = (pMapInfo && pMapInfo.price > 0)
         ? pMapInfo.price
         : (parseFloat(item.price) || 0);
-    
+
       return acc + (unitPrice * (item.quantity || 1));
     }, 0);
-    
+
     const designedPrice = getDesignedBundlePrice(rawTotal, paxQuery);
 
     const displayBundle = {
@@ -389,26 +389,32 @@ const BundleList = () => {
                           {isEditing ? 'Live Custom Price' : 'Bundle Price'}
                         </span>
                         <div className="flex flex-col items-start">
-  {/* Original Price */}
-  <span className="text-sm text-stone-400 line-through font-bold">
-    ₱{rawTotal.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    })}
-  </span>
+                          {/* Original Price */}
+                          <span className="text-sm text-stone-400 line-through font-bold">
+                            ₱{rawTotal.toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2
+                            })}
+                          </span>
 
-  {/* Discounted Designed Price */}
-  <span className="text-3xl font-black text-emerald-900 tracking-tighter">
-    ₱{designedPrice.toLocaleString(undefined, {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    })}
-  </span>
-</div>
+                          {/* Discounted Designed Price */}
+                          <span className="text-3xl font-black text-emerald-900 tracking-tighter">
+                            ₱{designedPrice.toLocaleString(undefined, {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2
+                            })}
+                          </span>
+                        </div>
                       </div>
-                      <button className="bg-emerald-800 hover:bg-emerald-900 text-white px-3 py-4 rounded-2xl font-black tracking-widest uppercase text-xs shadow-lg flex items-center gap-2 transition-all active:scale-95">
-                        <ShoppingBag size={18} /> Order Now
-                      </button>
+                      <a
+                        href="https://m.me/mb.castro.779"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-emerald-800 hover:bg-emerald-900 text-white px-3 py-4 rounded-2xl font-black tracking-widest uppercase text-xs shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95"
+                      >
+                        <MessageCircle size={18} />
+                        Order Now
+                      </a>
                     </div>
                   </div>
                 </div>
