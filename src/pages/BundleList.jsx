@@ -5,6 +5,7 @@ import { Clock, Users, ChevronLeft, ShoppingBag, Share2, Edit3, Save, RotateCcw,
 import { getEditableVariants, calculateSmartQuantity, formatItemName } from '../utils/bundleLogic';
 import * as htmlToImage from 'html-to-image';
 import PosterTemplate from '../components/PosterTemplate';
+import logo from '../assets/images/mb-logo-warm-golden-yellow-removebg-preview.png';
 
 const flattenPantry = (pantry) => {
   return pantry.flatMap(product =>
@@ -107,22 +108,22 @@ const BundleList = () => {
   const handleToggleItem = (bundle, variantId) => {
     const variantData = pantryMap[variantId];
     const minItems = bundle.max_pax === 5 ? 3 : 2;
-  
+
     // 🚫 BLOCK if main item
     if (!variantData || variantData.main) return;
-  
+
     const bundleId = bundle.id;
-  
+
     setCustomSelections(prev => {
       const currentItems = prev[bundleId] || bundle.bundle_items;
       const exists = currentItems.find(i => i.product_variant_id === variantId);
-  
+
       // 🛑 MINIMUM CHECK: If item exists (trying to uncheck) and count is <= 3, block it.
       if (exists && currentItems.length <= minItems) {
         alert(`Selection must have at least ${minItems} items.`);
         return prev;
       }
-  
+
       let newItems;
       if (exists) {
         newItems = currentItems.filter(i => i.product_variant_id !== variantId);
@@ -134,7 +135,7 @@ const BundleList = () => {
           price: variantData?.price || 0
         }];
       }
-  
+
       const updated = { ...prev, [bundleId]: newItems };
       // ✅ REMEMBER SELECTION: Saves to local storage for future interactions
       localStorage.setItem('servewise_bundle_customizations', JSON.stringify(updated));
@@ -154,26 +155,26 @@ const BundleList = () => {
 
   const handleDownloadPoster = async (bundle) => {
     const activeItems = customSelections[bundle.id] || bundle.bundle_items || [];
-  
+
     // ✅ SORT SAME AS UI (main first)
     const sortedItems = [...activeItems].sort((a, b) => {
       const itemA = pantryMap[a.product_variant_id];
       const itemB = pantryMap[b.product_variant_id];
-  
+
       const isMainA = itemA?.main ? 1 : 0;
       const isMainB = itemB?.main ? 1 : 0;
-  
+
       return isMainB - isMainA;
     });
-  
+
     const displayBundle = {
       ...bundle,
       bundle_items: sortedItems
     };
-  
+
     setSelectedBundle(displayBundle);
     setGeneratingId(bundle.id);
-  
+
     requestAnimationFrame(async () => {
       requestAnimationFrame(async () => {
         const node = document.getElementById('ma-donna-poster-final');
@@ -182,14 +183,14 @@ const BundleList = () => {
           setGeneratingId(null);
           return;
         }
-  
+
         try {
           const dataUrl = await htmlToImage.toPng(node, {
             pixelRatio: 2,
             cacheBust: true,
             useCORS: true
           });
-  
+
           const link = document.createElement('a');
           link.download = `MaDonna_${bundle.name.replace(/\s+/g, '_')}.png`;
           link.href = dataUrl;
@@ -209,12 +210,20 @@ const BundleList = () => {
 
       <div className="relative z-10 max-w-5xl mx-auto">
         <header className="flex justify-between items-center mb-10 Montserrat">
-          <button onClick={() => navigate('/')} className="flex items-center gap-2 text-white/80 hover:text-white transition-colors font-bold uppercase text-xs tracking-widest">
+          <button
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2 text-white/80 hover:text-white transition-colors font-bold uppercase text-xs tracking-widest"
+          >
             <ChevronLeft size={18} /> Change Pax
           </button>
-          <div className="text-right">
-            <h1 className="text-2xl font-black text-white tracking-tighter uppercase leading-none">👋 MABUHAY! Menu for {paxQuery} Pax</h1>
-            <div className="h-1 w-12 bg-emerald-500 ml-auto mt-2 rounded-full"></div>
+
+          <div className="text-right flex flex-col items-end">
+            {/* LOGO REPLACEMENT */}
+            <img
+              src={logo}
+              alt="Ma'Donna Delicacies"
+              className="w-32 md:w-44 h-auto drop-shadow-logo animate-float"
+            />
           </div>
         </header>
 
@@ -230,19 +239,19 @@ const BundleList = () => {
               const displayBundle = { ...bundle, bundle_items: activeItems };
               const smartSidesForThisBundle = smartSidesMap[bundle.id] || [];
               const itemsToShowRaw = isEditing
-  ? [...new Set([...activeIds, ...smartSidesForThisBundle.map(v => v.rails_variant_id)])]
-  : activeIds;
+                ? [...new Set([...activeIds, ...smartSidesForThisBundle.map(v => v.rails_variant_id)])]
+                : activeIds;
 
-// ✅ SORT: main items first
-const itemsToShow = itemsToShowRaw.sort((a, b) => {
-  const itemA = pantryMap[a];
-  const itemB = pantryMap[b];
+              // ✅ SORT: main items first
+              const itemsToShow = itemsToShowRaw.sort((a, b) => {
+                const itemA = pantryMap[a];
+                const itemB = pantryMap[b];
 
-  const isMainA = itemA?.main ? 1 : 0;
-  const isMainB = itemB?.main ? 1 : 0;
+                const isMainA = itemA?.main ? 1 : 0;
+                const isMainB = itemB?.main ? 1 : 0;
 
-  return isMainB - isMainA; // main=true goes first
-});
+                return isMainB - isMainA; // main=true goes first
+              });
 
               // CALCULATION: Recalculate on every toggle
               const currentTotalPrice = activeItems.reduce((acc, item) => {

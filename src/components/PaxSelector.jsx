@@ -1,19 +1,17 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, UsersRound, Home, PartyPopper, Utensils, Coffee, Store, Tent } from 'lucide-react';
+// Import the transparent logo from your local assets path
+import logo from '../assets/images/mb-logo-warm-golden-yellow-removebg-preview.png';
 
 const PaxSelector = () => {
   const navigate = useNavigate();
 
   const categories = [
     { id: 5, label: 'Small Salo-Salo', pax: '5 Pax', icon: <Coffee className="w-6 h-6 text-emerald-800" />, desc: 'Intimate meal' },
-    { id: 10, label: 'Family Set', pax: '10 Pax', icon: <Home className="w-6 h-6 text-emerald-800" />, desc: 'Standard family lunch' },
-    { id: 15, label: 'Barkada Pack', pax: '15 Pax', icon: <Utensils className="w-6 h-6 text-emerald-800" />, desc: 'Great for small teams' },
-    { id: 20, label: 'Celebration Set', pax: '20 Pax', icon: <Users className="w-6 h-6 text-emerald-800" />, desc: 'Birthdays & parties' },
-    { id: 25, label: 'Office Feast', pax: '25 Pax', icon: <UsersRound className="w-6 h-6 text-emerald-800" />, desc: 'Corporate lunch' },
-    { id: 30, label: 'Grand Salo-Salo', pax: '30 Pax', icon: <Store className="w-6 h-6 text-emerald-800" />, desc: 'Big family reunions' },
-    { id: 40, label: 'Fiesta Bundle', pax: '40 Pax', icon: <Tent className="w-6 h-6 text-emerald-800" />, desc: 'Barangay celebrations' },
-    { id: 50, label: 'The Ultimate Feast', pax: '50 Pax', icon: <PartyPopper className="w-6 h-6 text-emerald-800" />, desc: 'Maximum celebration' },
+    { id: 10, label: 'Family Set', pax: '10 Pax', icon: <Home className="w-6 h-6 text-emerald-800" />, desc: 'Family Celebrations' },
+    { id: 15, label: 'Barkada Pack', pax: '15 Pax', icon: <Users className="w-6 h-6 text-emerald-800" />, desc: 'Great for small teams' },
+    { id: 20, label: 'Celebration Set', pax: '20 Pax', icon: <PartyPopper className="w-6 h-6 text-emerald-800" />, desc: 'Birthdays & parties' }
   ];
 
   const handlePaxSelection = (paxCount) => {
@@ -22,8 +20,8 @@ const PaxSelector = () => {
 
   return (
     <div className="relative min-h-screen w-full font-sans">
-      {/* FIXED BACKGROUND LAYER: This stays blurred while you scroll */}
-      <div 
+      {/* FIXED BACKGROUND LAYER */}
+      <div
         className="fixed inset-0 bg-[url('https://images.unsplash.com/photo-1516062423079-7ca13cdc7f5a?q=80&w=2083')] bg-cover bg-center"
         aria-hidden="true"
       >
@@ -32,14 +30,27 @@ const PaxSelector = () => {
 
       {/* SCROLLABLE CONTENT LAYER */}
       <div className="relative z-10 w-full max-w-6xl mx-auto px-6 py-16 flex flex-col items-center">
-        <header className="text-center mb-16">
-          <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tighter drop-shadow-2xl">
-            👋 MABUHAY! WELCOME TO MB-BUNDLES
+        <header className="text-center mb-16 flex flex-col items-center">
+          {/* LOGO DISPLAY */}
+          <div className="mb-3 animate-float">
+            <img
+              src={logo}
+              alt="Ma'Donna Delicacies Logo"
+              className="w-50 md:w-40 h-auto drop-shadow-logo"
+            />
+          </div>
+
+          <h1 className="text-3xl md:text-5xl font-black text-white mb-4 tracking-tighter drop-shadow-2xl">
+            Ma'Donna Delicacies
           </h1>
-          <div className="h-1.5 w-24 bg-emerald-500 mx-auto mb-6 rounded-full shadow-lg"></div>
-          <p className="text-emerald-50 text-lg md:text-xl font-medium italic opacity-90">
-            Select your group size to see curated packages for Lipa City
-          </p>
+
+          <div className="h-1.5 w-24 bg-emerald-500 mx-auto mb-16 rounded-full shadow-lg"></div>
+
+          <div className="relative inline-block">
+            <p className="text-emerald-50 text-xl md:text-2xl font-bold italic tracking-tight opacity-90">
+              Choose your bundles
+            </p>
+          </div>
         </header>
 
         {/* The Grid */}
@@ -53,20 +64,19 @@ const PaxSelector = () => {
               <div className="bg-emerald-100 p-4 rounded-2xl mb-4 group-hover:scale-110 group-hover:bg-emerald-200 transition-all duration-300">
                 {cat.icon}
               </div>
-              
+
               <h3 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2">
                 {cat.label}
               </h3>
-              
+
               <span className="text-3xl font-black text-stone-900 tracking-tighter">
                 {cat.pax}
               </span>
-              
+
               <p className="mt-3 text-[11px] text-emerald-800 font-bold uppercase tracking-widest opacity-70 group-hover:opacity-100">
                 {cat.desc}
               </p>
 
-              {/* Subtle hover indicator */}
               <div className="absolute bottom-4 opacity-0 group-hover:opacity-100 transition-opacity">
                 <div className="w-1 h-1 bg-emerald-600 rounded-full animate-bounce"></div>
               </div>
@@ -75,7 +85,7 @@ const PaxSelector = () => {
         </div>
 
         <footer className="mt-20 text-white/40 text-[10px] font-black uppercase tracking-[0.4em]">
-          Premium Catering • Lipa City, Batangas
+          Madonna Delicacies • Since 2020
         </footer>
       </div>
     </div>
