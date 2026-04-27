@@ -18,27 +18,8 @@ const PosterTemplate = ({ bundle, pantryMap }) => {
     return unique.filter(i => i?.public_id).slice(0, 4);
   }, [bundle, pantryMap]);
 
-  // ✅ Recalculate price (ensures export matches UI)
-  const dynamicTotalPrice = useMemo(() => {
-    if (!bundle?.bundle_items) return 0;
-
-    return bundle.bundle_items.reduce((acc, item) => {
-      const pMapInfo = pantryMap[item.product_variant_id];
-
-      const unitPrice =
-        (pMapInfo && pMapInfo.price > 0)
-          ? pMapInfo.price
-          : (parseFloat(item.price) || 0);
-
-      return acc + (unitPrice * (item.quantity || 1));
-    }, 0);
-  }, [bundle, pantryMap]);
-
-  const finalPrice =
-    dynamicTotalPrice > 0
-      ? dynamicTotalPrice
-      : parseFloat(bundle.price || 0);
-
+  const finalPrice = parseFloat(bundle.designed_price || 0);
+  
   return (
     <div
       id="ma-donna-poster-final"
@@ -92,7 +73,10 @@ const PosterTemplate = ({ bundle, pantryMap }) => {
         {/* PRICE */}
         <div>
           <p className="text-[120px] font-black text-emerald-900 tracking-tighter leading-none mb-4">
-            ₱{finalPrice.toLocaleString()}
+            ₱{finalPrice.toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            })}
           </p>
           <p className="text-3xl font-black text-orange-600 uppercase tracking-[0.2em]">
             {bundle.lead_time_days || 2}-Day Lead Time

@@ -6,6 +6,7 @@ import { getEditableVariants, calculateSmartQuantity, formatItemName } from '../
 import * as htmlToImage from 'html-to-image';
 import PosterTemplate from '../components/PosterTemplate';
 import logo from '../assets/images/mb-logo-warm-golden-yellow-removebg-preview.png';
+import { getDesignedBundlePrice } from '../utils/discountLogic';
 
 const flattenPantry = (pantry) => {
   return pantry.flatMap(product =>
@@ -167,9 +168,22 @@ const BundleList = () => {
       return isMainB - isMainA;
     });
 
+    const rawTotal = sortedItems.reduce((acc, item) => {
+      const pMapInfo = pantryMap[item.product_variant_id];
+    
+      const unitPrice = (pMapInfo && pMapInfo.price > 0)
+        ? pMapInfo.price
+        : (parseFloat(item.price) || 0);
+    
+      return acc + (unitPrice * (item.quantity || 1));
+    }, 0);
+    
+    const designedPrice = getDesignedBundlePrice(rawTotal, paxQuery);
+
     const displayBundle = {
       ...bundle,
-      bundle_items: sortedItems
+      bundle_items: sortedItems,
+      designed_price: designedPrice
     };
 
     setSelectedBundle(displayBundle);
@@ -263,6 +277,9 @@ const BundleList = () => {
 
                 return acc + (unitPrice * (item.quantity || 1));
               }, 0);
+
+              const rawTotal = currentTotalPrice;
+              const designedPrice = getDesignedBundlePrice(rawTotal, paxQuery);
 
               return (
                 <div key={bundle.id} className="group relative bg-orange-50/95 rounded-3xl overflow-hidden shadow-2xl flex flex-col border-b-8 border-emerald-900 transition-all hover:shadow-emerald-900/20">
@@ -371,12 +388,23 @@ const BundleList = () => {
                         <span className="block text-[10px] font-black text-stone-400 uppercase tracking-widest">
                           {isEditing ? 'Live Custom Price' : 'Bundle Price'}
                         </span>
-                        <span className="text-3xl font-black text-emerald-900 tracking-tighter">
-                          ₱{currentTotalPrice.toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2
-                          })}
-                        </span>
+                        <div className="flex flex-col items-start">
+  {/* Original Price */}
+  <span className="text-sm text-stone-400 line-through font-bold">
+    ₱{rawTotal.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}
+  </span>
+
+  {/* Discounted Designed Price */}
+  <span className="text-3xl font-black text-emerald-900 tracking-tighter">
+    ₱{designedPrice.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}
+  </span>
+</div>
                       </div>
                       <button className="bg-emerald-800 hover:bg-emerald-900 text-white px-3 py-4 rounded-2xl font-black tracking-widest uppercase text-xs shadow-lg flex items-center gap-2 transition-all active:scale-95">
                         <ShoppingBag size={18} /> Order Now
