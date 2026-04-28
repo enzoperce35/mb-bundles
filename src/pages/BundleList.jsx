@@ -73,6 +73,7 @@ const BundleList = () => {
   const smartSidesMap = useMemo(() => {
     const map = {};
     bundles.forEach(bundle => {
+      // This function returns an array where each product_name is unique
       map[bundle.id] = getEditableVariants(HARDCODED_PANTRY, bundle.max_pax);
     });
     return map;
@@ -350,6 +351,12 @@ const BundleList = () => {
                             ? itemInSelection.quantity
                             : calculateSmartQuantity(pantryItem.pax, bundle.max_pax);
 
+                          const unitPrice = (pantryItem?.price > 0)
+                            ? pantryItem.price
+                            : (parseFloat(itemInSelection?.price) || 0);
+
+                          const totalPrice = unitPrice * quantity;
+
                           return (
                             <li
                               key={variantId}
@@ -357,7 +364,7 @@ const BundleList = () => {
                               className={`text-sm font-bold flex items-center gap-3 transition-all 
                                 ${isEditing && !isMain ? 'cursor-pointer p-2 rounded-lg hover:bg-emerald-50/50' : ''} 
                                 ${isMain ? 'opacity-100 cursor-not-allowed' : ''}
-                                ${isSelected ? 'text-stone-700' : 'text-stone-300 opacity-100'}
+                                ${isSelected ? 'text-stone-700' : 'text-stone-400'}
                               `}
                             >
                               <div className={`w-5 h-5 rounded flex items-center justify-center transition-all border-2 
@@ -372,9 +379,21 @@ const BundleList = () => {
                                   <Check size={14} className="text-white stroke-[4px]" />
                                 )}
                               </div>
-                              <span>
-                                {formatItemName(pantryItem, quantity)}
-                              </span>
+                              <div className="flex justify-between items-center w-full">
+                                <span>
+                                  {formatItemName(pantryItem, quantity)}
+                                </span>
+
+                                {isEditing && (
+                                  <span
+                                    className={`text-[10px] font-black whitespace-nowrap
+        ${isSelected ? 'text-emerald-700' : 'text-stone-400'}
+      `}
+                                  >
+                                    ₱{totalPrice.toLocaleString()}
+                                  </span>
+                                )}
+                              </div>
                             </li>
                           );
                         })}

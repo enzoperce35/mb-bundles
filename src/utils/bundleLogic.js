@@ -4,25 +4,31 @@
 
 export const getEditableVariants = (pantry, bundleMaxPax) => {
   const editableSides = [];
+  // Rule: bundleMaxPax of 5 is considered the "Minimum Bundle"
   const isMinBundle = bundleMaxPax <= 5;
 
   pantry.forEach(product => {
-    // 1. FILTER: Apply the solo vs party rules
+    // 1. FILTER: Apply boundary rules to create the allowed pool
     const allowedPool = product.variants.filter(v => {
+      // Always exclude main dishes from the "Sides/Inclusions" pool
       if (v.main) return false;
 
       if (isMinBundle) {
-        // If it's a 5-pax bundle, exclude big Party Sizes
+        // Minimum Bundle (5 pax): Block "Party Sizes" (Bilaos)
+        // This keeps it restricted to Solo items or Universal items
         return v.isPartySize !== true;
       } else {
-        // If it's 10-pax or more, exclude tiny Solo items
+        // Larger Bundles (> 5 pax): Block "Solo Only" items
+        // This makes it versatile for all party sizes
         return v.isSoloOnly !== true;
       }
     });
 
+    // If no variants for this product are allowed for this bundle size, skip it
     if (allowedPool.length === 0) return;
 
-    // 2. BEST FIT: Match the closest size from the allowed list
+    // 2. BEST FIT: Reduce the pool down to exactly ONE winner per product
+    // We pick the variant whose pax count is closest to the bundleMaxPax
     const bestFit = allowedPool.reduce((prev, curr) => {
       const prevDiff = Math.abs(prev.pax - bundleMaxPax);
       const currDiff = Math.abs(curr.pax - bundleMaxPax);

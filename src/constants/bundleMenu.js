@@ -20,8 +20,11 @@ export const HARDCODED_PANTRY = [
     rails_parent_id: 10,
     public_id: 'v5ka545zjxkasejhml90',
     variants: [
-      { name: "Chicken Wings", mb_name: "Chicken Wings 6pcs Assorted", rails_variant_id: 53, price: 145, pax: 2.5, count: 6, isPartySize: true },
       { name: "Chicken Wings", mb_name: "Chicken Wings 10pcs Assorted", rails_variant_id: 57, price: 235, pax: 4, count: 10, isSoloOnly: true },
+      { name: "Chicken Wings", mb_name: "Chicken Wings 20pcs Assorted", rails_variant_id: 61, price: 450, pax: 8, count: 20, isPartySize: true },
+      { name: "Chicken Wings", mb_name: "Chicken Wings 30pcs Assorted", rails_variant_id: 80, price: 730, pax: 12, count: 30, isPartySize: true },
+      { name: "Chicken Wings", mb_name: "Chicken Wings 40pcs Assorted", rails_variant_id: 81, price: 900, pax: 16, count: 40, isPartySize: true },
+      { name: "Chicken Wings", mb_name: "Chicken Wings 50pcs Assorted", rails_variant_id: 82, price: 1100, pax: 20, count: 50, isPartySize: true },
     ]
   },
   {
