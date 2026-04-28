@@ -8,12 +8,10 @@ const PosterTemplate = ({ bundle, pantryMap }) => {
     if (itemCount <= 2) return 1400;
     if (itemCount >= 9) return 1800;
     
-    // Smooth scaling between 1400px and 1800px
     const growthPerItem = (1800 - 1400) / (9 - 2); 
     return 1400 + Math.round((itemCount - 2) * growthPerItem);
   }, [bundle.bundle_items]);
 
-  // ✅ Optimized Gallery Images (Limited to 4 for clean layout)
   const images = useMemo(() => {
     if (!bundle?.bundle_items) return [];
     const unique = Array.from(
@@ -119,7 +117,7 @@ const PosterTemplate = ({ bundle, pantryMap }) => {
         </div>
       </div>
 
-      {/* RIGHT GALLERY - Fully Optimized for Data Usage */}
+      {/* RIGHT GALLERY */}
       <div className="w-[40%] bg-stone-100 flex flex-col p-4 gap-4">
         {images.map((item, i) => (
           <div
@@ -129,7 +127,6 @@ const PosterTemplate = ({ bundle, pantryMap }) => {
             }`}
           >
             <img
-              // ✅ Dynamic Cloudinary Optimization: f_auto (format), q_auto (quality), c_fill (crop)
               src={`https://res.cloudinary.com/dvgveqqtj/image/upload/c_fill,w_800,h_1200,q_auto,f_auto/${item.public_id}`}
               alt={item.product_name}
               className="w-full h-full object-cover"
