@@ -23,7 +23,7 @@ const BundleBuilder = () => {
     min_pax: 10,
     max_pax: 20,
     lead_time_days: 2,
-    shop_id: 1, 
+    shop_id: 1,
     items: []
   });
 
@@ -47,11 +47,11 @@ const BundleBuilder = () => {
         const response = await fetch('https://servewise-market-backend.onrender.com/api/v1/products?shop_id=1&admin_mode=true');
         const data = await response.json();
         const liveMapping = { ...initialMapping }; // Keep hardcoded as base
-  
-        const allProducts = Array.isArray(data[0]?.products) 
-          ? data.flatMap(g => g.products) 
+
+        const allProducts = Array.isArray(data[0]?.products)
+          ? data.flatMap(g => g.products)
           : data;
-  
+
         allProducts.forEach(product => {
           const variants = product.product_variants || product.variants || [];
           variants.forEach(v => {
@@ -60,7 +60,7 @@ const BundleBuilder = () => {
             }
           });
         });
-  
+
         setPriceMap(liveMapping);
         setLoadingPrices(false);
       } catch (err) {
@@ -91,9 +91,9 @@ const BundleBuilder = () => {
       if (existingItem) {
         return {
           ...prev,
-          items: prev.items.map(i => 
-            i.rails_variant_id === item.rails_variant_id 
-              ? { ...i, quantity: i.quantity + 1 } 
+          items: prev.items.map(i =>
+            i.rails_variant_id === item.rails_variant_id
+              ? { ...i, quantity: i.quantity + 1 }
               : i
           )
         };
@@ -106,9 +106,9 @@ const BundleBuilder = () => {
   };
 
   const removeItem = (rails_variant_id) => {
-    setBundle(prev => ({ 
-      ...prev, 
-      items: prev.items.filter(item => item.rails_variant_id !== rails_variant_id) 
+    setBundle(prev => ({
+      ...prev,
+      items: prev.items.filter(item => item.rails_variant_id !== rails_variant_id)
     }));
   };
 
@@ -126,7 +126,7 @@ const BundleBuilder = () => {
     }));
   };
 
-  const filteredPantry = flatPantry.filter(item => 
+  const filteredPantry = flatPantry.filter(item =>
     item.mb_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.product_name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -145,13 +145,13 @@ const BundleBuilder = () => {
         min_pax: bundle.min_pax,
         max_pax: bundle.max_pax,
         lead_time_days: bundle.lead_time_days,
-        shop_id: 1, 
+        shop_id: 1,
         active: true,
         bundle_items_attributes: bundle.items.map(item => ({
           product_variant_id: item.rails_variant_id,
           quantity: item.quantity,
           // Sending price ensures the snapshot is captured correctly
-          price: getItemPrice(item.rails_variant_id) 
+          price: getItemPrice(item.rails_variant_id)
         }))
       }
     };
@@ -207,34 +207,34 @@ const BundleBuilder = () => {
                     onChange={(e) => setBundle({ ...bundle, name: e.target.value })}
                   />
                 </div>
-                <div className="flex flex-col">
-                  <label className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] mb-2 Montserrat">Selling Price (₱)</label>
-                  <input
-                    type="number"
-                    className="bg-white border-2 border-stone-200 rounded-xl px-4 py-4 focus:border-emerald-600 outline-none transition-all font-black text-emerald-800 text-xl Montserrat"
-                    value={bundle.price}
-                    onChange={(e) => setBundle({ ...bundle, price: e.target.value })}
-                  />
+
+                <div className="bg-emerald-50 border-2 border-emerald-200 rounded-xl px-5 py-4 flex flex-col justify-center">
+                  <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest Montserrat">
+                    Total Cost of Items
+                  </p>
+                  <p className="text-2xl font-black text-emerald-700 Montserrat tracking-tight">
+                    ₱{bundle.items.reduce((acc, item) => acc + calculateItemTotal(item).totalPrice, 0).toLocaleString()}
+                  </p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-emerald-900/5 p-4 rounded-2xl border border-emerald-900/10">
-                  <label className="text-[10px] font-black text-emerald-900 uppercase Montserrat tracking-widest mb-2 flex items-center gap-2"><Users size={14}/> Min Pax</label>
-                  <select className="w-full bg-transparent font-black text-lg Montserrat outline-none" value={bundle.min_pax} onChange={(e) => setBundle({...bundle, min_pax: parseInt(e.target.value)})}>
-                    {[5,10,15,20,25,30,40,50].map(p => <option key={p} value={p}>{p} Pax</option>)}
+                  <label className="text-[10px] font-black text-emerald-900 uppercase Montserrat tracking-widest mb-2 flex items-center gap-2"><Users size={14} /> Min Pax</label>
+                  <select className="w-full bg-transparent font-black text-lg Montserrat outline-none" value={bundle.min_pax} onChange={(e) => setBundle({ ...bundle, min_pax: parseInt(e.target.value) })}>
+                    {[5, 10, 15, 20, 25, 30, 40, 50].map(p => <option key={p} value={p}>{p} Pax</option>)}
                   </select>
                 </div>
                 <div className="bg-emerald-900/5 p-4 rounded-2xl border border-emerald-900/10">
-                  <label className="text-[10px] font-black text-emerald-900 uppercase Montserrat tracking-widest mb-2 flex items-center gap-2"><Users size={14}/> Max Pax</label>
-                  <select className="w-full bg-transparent font-black text-lg Montserrat outline-none" value={bundle.max_pax} onChange={(e) => setBundle({...bundle, max_pax: parseInt(e.target.value)})}>
-                    {[5,10,15,20,25,30,40,50].map(p => <option key={p} value={p}>{p} Pax</option>)}
+                  <label className="text-[10px] font-black text-emerald-900 uppercase Montserrat tracking-widest mb-2 flex items-center gap-2"><Users size={14} /> Max Pax</label>
+                  <select className="w-full bg-transparent font-black text-lg Montserrat outline-none" value={bundle.max_pax} onChange={(e) => setBundle({ ...bundle, max_pax: parseInt(e.target.value) })}>
+                    {[5, 10, 15, 20, 25, 30, 40, 50].map(p => <option key={p} value={p}>{p} Pax</option>)}
                   </select>
                 </div>
                 <div className="bg-orange-900/5 p-4 rounded-2xl border border-orange-900/10">
-                  <label className="text-[10px] font-black text-orange-900 uppercase Montserrat tracking-widest mb-2 flex items-center gap-2"><Clock size={14}/> Lead Time</label>
+                  <label className="text-[10px] font-black text-orange-900 uppercase Montserrat tracking-widest mb-2 flex items-center gap-2"><Clock size={14} /> Lead Time</label>
                   <div className="flex items-center gap-2">
-                    <input type="number" className="w-full bg-transparent font-black text-lg Montserrat outline-none" value={bundle.lead_time_days} onChange={(e) => setBundle({...bundle, lead_time_days: parseInt(e.target.value)})}/>
+                    <input type="number" className="w-full bg-transparent font-black text-lg Montserrat outline-none" value={bundle.lead_time_days} onChange={(e) => setBundle({ ...bundle, lead_time_days: parseInt(e.target.value) })} />
                     <span className="text-[10px] font-black text-stone-400 uppercase Montserrat">Days</span>
                   </div>
                 </div>
@@ -243,14 +243,8 @@ const BundleBuilder = () => {
               <div className="mt-8">
                 <div className="flex justify-between items-end mb-4">
                   <h3 className="text-[10px] font-black text-stone-400 uppercase tracking-[0.2em] Montserrat">Included in Bundle</h3>
-                  <div className="text-right">
-                    <p className="text-[9px] font-black text-emerald-600 uppercase Montserrat tracking-widest">Total Cost of Items</p>
-                    <p className="text-xl font-black text-stone-800 Montserrat">
-                      ₱{bundle.items.reduce((acc, item) => acc + calculateItemTotal(item).totalPrice, 0).toLocaleString()}
-                    </p>
-                  </div>
                 </div>
-                
+
                 <div className="bg-white/50 border-2 border-dashed border-stone-200 rounded-3xl p-4 min-h-[300px]">
                   {bundle.items.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-12 text-stone-300 Montserrat">

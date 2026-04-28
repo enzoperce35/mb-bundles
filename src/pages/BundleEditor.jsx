@@ -212,10 +212,16 @@ const EditBundle = () => {
                   <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2 Montserrat">Bundle Name</label>
                   <input type="text" className="bg-white border-2 border-stone-200 rounded-2xl px-5 py-4 focus:border-orange-600 outline-none font-bold" value={bundle.name} onChange={(e) => setBundle({ ...bundle, name: e.target.value })} />
                 </div>
-                <div className="flex flex-col">
-                  <label className="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-2 Montserrat">Selling Price (₱)</label>
-                  <input type="number" className="bg-white border-2 border-stone-200 rounded-2xl px-5 py-4 focus:border-orange-600 outline-none font-black text-orange-800 text-xl" value={bundle.price} onChange={(e) => setBundle({ ...bundle, price: e.target.value })} />
-                </div>
+                <div className="sticky top-4 z-20 bg-gradient-to-br from-orange-600 to-orange-800 text-white rounded-2xl px-6 py-5 shadow-xl flex items-center justify-between">
+  <div>
+    <p className="text-[9px] font-black uppercase tracking-widest opacity-80">
+      Running Total
+    </p>
+    <p className="text-2xl font-black tracking-tight">
+      ₱{bundleTotals.price.toLocaleString()}
+    </p>
+  </div>
+</div>
               </div>
 
               {/* Editable Pax & Lead Time */}
@@ -245,12 +251,6 @@ const EditBundle = () => {
               <div>
                 <div className="flex justify-between items-end mb-4 px-2">
                   <h3 className="text-[10px] font-black text-stone-400 uppercase tracking-widest Montserrat">Current Items</h3>
-                  <div className="text-right">
-                    <p className="text-[9px] font-black text-orange-600 uppercase tracking-widest Montserrat">
-                        Running Total Value:
-                    </p>
-                    <p className="text-2xl font-black text-stone-800 Montserrat">₱{bundleTotals.price.toLocaleString()}</p>
-                  </div>
                 </div>
                 
                 <div className="bg-white/50 border-2 border-dashed border-stone-200 rounded-[2rem] p-4 min-h-[350px]">
