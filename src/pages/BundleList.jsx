@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { HARDCODED_PANTRY } from '../constants/bundleMenu';
-import { Clock, Users, ChevronLeft, MessageCircle, Share2, Edit3, Save, RotateCcw, Check } from 'lucide-react';
-import { getEditableVariants, calculateSmartQuantity, formatItemName } from '../utils/bundleLogic';
+import { ChevronLeft } from 'lucide-react';
+import { getEditableVariants, calculateSmartQuantity } from '../utils/bundleLogic';
 import * as htmlToImage from 'html-to-image';
 import PosterTemplate from '../components/PosterTemplate';
 import logo from '../assets/images/mb-logo-warm-golden-yellow-removebg-preview.png';
 import { getDesignedBundlePrice } from '../utils/discountLogic';
+import BundleCard from '../components/BundleCard';
 
 const flattenPantry = (pantry) => {
   return pantry.flatMap(product =>
@@ -18,7 +19,7 @@ const flattenPantry = (pantry) => {
     }))
   );
 };
-//bundles.map
+
 const BundleList = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -81,8 +82,25 @@ const BundleList = () => {
 
   useEffect(() => {
     const saved = localStorage.getItem('servewise_bundle_customizations');
-    if (saved) setCustomSelections(JSON.parse(saved));
-  }, []);
+    if (!saved) return;
+
+    try {
+      const parsed = JSON.parse(saved);
+
+      const validVariantIds = new Set(flatPantry.map(p => p.rails_variant_id));
+
+      const cleaned = Object.fromEntries(
+        Object.entries(parsed).map(([bundleId, items]) => [
+          bundleId,
+          items.filter(i => validVariantIds.has(i.product_variant_id))
+        ])
+      );
+
+      setCustomSelections(cleaned);
+    } catch {
+      localStorage.removeItem('servewise_bundle_customizations');
+    }
+  }, [flatPantry]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -107,42 +125,44 @@ const BundleList = () => {
     fetchData();
   }, [paxQuery]);
 
-  const handleToggleItem = (bundle, variantId) => {
-    const variantData = pantryMap[variantId];
-    const minItems = bundle.max_pax === 5 ? 3 : 2;
+  const [isUpdating, setIsUpdating] = useState(false);
 
-    // 🚫 BLOCK if main item
+  const handleToggleItem = (bundle, variantId) => {
+    if (isUpdating) return;
+
+    const variantData = pantryMap[variantId];
     if (!variantData || variantData.main) return;
 
-    const bundleId = bundle.id;
+    setIsUpdating(true);
 
     setCustomSelections(prev => {
-      const currentItems = prev[bundleId] || bundle.bundle_items;
+      const currentItems = prev[bundle.id] || bundle.bundle_items || [];
       const exists = currentItems.find(i => i.product_variant_id === variantId);
-    
+
       let newItems;
-    
+
       if (exists) {
-        // remove item
         newItems = currentItems.filter(i => i.product_variant_id !== variantId);
       } else {
         const smartQty = calculateSmartQuantity(variantData?.pax, bundle.max_pax);
-    
+
         newItems = [
           ...currentItems,
           {
             product_variant_id: variantId,
             quantity: smartQty,
             price: variantData?.price || 0,
-            _clickedAt: Date.now() // 🆕 track order
+            _clickedAt: Date.now()
           }
         ];
       }
-    
-      const updated = { ...prev, [bundleId]: newItems };
+
+      const updated = { ...prev, [bundle.id]: newItems };
       localStorage.setItem('servewise_bundle_customizations', JSON.stringify(updated));
       return updated;
     });
+
+    setTimeout(() => setIsUpdating(false), 16);
   };
 
   const resetBundle = (bundleId) => {
@@ -190,33 +210,31 @@ const BundleList = () => {
     setSelectedBundle(displayBundle);
     setGeneratingId(bundle.id);
 
-    requestAnimationFrame(async () => {
-      requestAnimationFrame(async () => {
-        const node = document.getElementById('ma-donna-poster-final');
-        if (!node) {
-          console.error("Poster node not found");
-          setGeneratingId(null);
-          return;
-        }
+    setTimeout(async () => {
+      const node = document.getElementById('ma-donna-poster-final');
+      if (!node) {
+        console.error("Poster node not found");
+        setGeneratingId(null);
+        return;
+      }
 
-        try {
-          const dataUrl = await htmlToImage.toPng(node, {
-            pixelRatio: 1.5,
-            cacheBust: true,
-            useCORS: true
-          });
+      try {
+        const dataUrl = await htmlToImage.toPng(node, {
+          pixelRatio: 1.5,
+          cacheBust: true,
+          useCORS: true
+        });
 
-          const link = document.createElement('a');
-          link.download = `MaDonna_${bundle.name.replace(/\s+/g, '_')}.png`;
-          link.href = dataUrl;
-          link.click();
-        } catch (err) {
-          console.error("Download failed:", err);
-        } finally {
-          setGeneratingId(null);
-          setSelectedBundle(null);
-        }
-      });
+        const link = document.createElement('a');
+        link.download = `MaDonna_${bundle.name.replace(/\s+/g, '_')}.png`;
+        link.href = dataUrl;
+        link.click();
+      } catch (err) {
+        console.error("Download failed:", err);
+      } finally {
+        setGeneratingId(null);
+        setSelectedBundle(null);
+      }
     });
   };
 
@@ -247,239 +265,29 @@ const BundleList = () => {
           <div className="flex justify-center py-20"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div></div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {bundles.map((bundle) => {
-              const isEditing = editingId === bundle.id;
-              const activeItems = customSelections[bundle.id] || bundle.bundle_items || [];
-              const activeIds = activeItems.map(i => i.product_variant_id);
-
-              const displayBundle = { ...bundle, bundle_items: activeItems };
-              const smartSidesForThisBundle = smartSidesMap[bundle.id] || [];
-              const itemsToShowRaw = (() => {
-                if (!isEditing) return activeIds;
-              
-                const resultMap = {};
-              
-                // ✅ PRIORITY: existing bundle items
-                activeItems.forEach(item => {
-                  const p = pantryMap[item.product_variant_id];
-                  if (!p) return;
-              
-                  resultMap[p.rails_parent_id] = item.product_variant_id;
-                });
-              
-                // ✅ FALLBACK: bestFit only if missing
-                smartSidesForThisBundle.forEach(variant => {
-                  if (!resultMap[variant.rails_parent_id]) {
-                    resultMap[variant.rails_parent_id] = variant.rails_variant_id;
-                  }
-                });
-              
-                return Object.values(resultMap);
-              })();
-
-              // ✅ SORT: main items first
-              const itemsToShow = [...itemsToShowRaw].sort((a, b) => {
-                const itemA = pantryMap[a];
-                const itemB = pantryMap[b];
-              
-                const aIsMain = itemA?.main ? 3 : 0;
-                const bIsMain = itemB?.main ? 3 : 0;
-              
-                // items originally from backend bundle (default selected)
-                const aIsDefault = activeItems.some(i => i.product_variant_id === a) ? 2 : 0;
-                const bIsDefault = activeItems.some(i => i.product_variant_id === b) ? 2 : 0;
-              
-                // click order (newly added go bottom)
-                const aTime = activeItems.find(i => i.product_variant_id === a)?._clickedAt || 0;
-                const bTime = activeItems.find(i => i.product_variant_id === b)?._clickedAt || 0;
-              
-                const aScore = aIsMain + aIsDefault;
-                const bScore = bIsMain + bIsDefault;
-              
-                if (bScore !== aScore) return bScore - aScore;
-              
-                // within same group → oldest first, newest last
-                return aTime - bTime;
-              });
-
-              // CALCULATION: Recalculate on every toggle
-              const currentTotalPrice = activeItems.reduce((acc, item) => {
-                const pMapInfo = pantryMap[item.product_variant_id];
-                // Priority: Hydrated Map (Hardcoded) -> Item Property -> 0
-                const unitPrice = (pMapInfo && pMapInfo.price > 0)
-                  ? pMapInfo.price
-                  : (parseFloat(item.price) || 0);
-
-                return acc + (unitPrice * (item.quantity || 1));
-              }, 0);
-
-              const rawTotal = currentTotalPrice;
-              const designedPrice = getDesignedBundlePrice(rawTotal, paxQuery);
-
-              return (
-                <div key={bundle.id} className="group relative bg-orange-50/95 rounded-3xl overflow-hidden shadow-2xl flex flex-col border-b-8 border-emerald-900 transition-all hover:shadow-emerald-900/20">
-                  <div className="p-8 pb-0">
-                    <div className="flex justify-between items-start mb-4 Montserrat">
-                      <button
-                        onClick={() => setEditingId(isEditing ? null : bundle.id)}
-                        className={`flex items-center gap-2 text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest transition-all ${isEditing ? 'bg-orange-600 text-white animate-pulse' : 'bg-emerald-800 text-white hover:bg-emerald-700'}`}
-                      >
-                        {isEditing ? <Save size={12} /> : <Edit3 size={12} />}
-                        {isEditing ? 'Finish Editing' : 'Edit Inclusions'}
-                      </button>
-
-                      <button
-                        onClick={() => handleDownloadPoster(bundle)}
-                        disabled={generatingId === bundle.id}
-                        className="group flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-stone-500 hover:text-emerald-700 transition-colors"
-                      >
-                        <Share2 size={14} className="group-hover:rotate-12 transition-transform" />
-                        {generatingId === bundle.id ? "Processing..." : "Share Poster"}
-                      </button>
-                    </div>
-
-                    <h2 className="text-3xl font-black text-stone-800 tracking-tighter leading-none mb-2 uppercase Montserrat">{bundle.name}</h2>
-                    <div className="flex items-center gap-4 Montserrat">
-                      <p className="text-stone-400 font-bold text-xs uppercase flex items-center gap-1.5">
-                        <Users size={14} />
-                        {bundle.min_pax === bundle.max_pax
-                          ? `${bundle.max_pax} Pax`
-                          : `${bundle.min_pax}-${bundle.max_pax} Pax`
-                        }
-                      </p>
-                      <p className="text-orange-700 font-bold text-xs uppercase flex items-center gap-1.5">
-                        <Clock size={14} /> {bundle.lead_time_days || 2} Days
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="p-8 pt-6 flex-grow">
-                    <div className={`rounded-2xl p-5 border relative transition-all ${isEditing ? 'bg-white border-orange-200' : 'bg-emerald-900/5 border-emerald-900/10'}`}>
-                      <div className="flex justify-between items-center mb-4 Montserrat">
-                        <h3 className="text-[10px] font-black text-emerald-900 uppercase tracking-widest italic">
-                          {isEditing ? 'Product Checklist:' : 'The Set List:'}
-                        </h3>
-                        {isEditing && (
-                          <button onClick={() => resetBundle(bundle.id)} className="text-[9px] text-orange-600 font-bold flex items-center gap-1 uppercase">
-                            <RotateCcw size={10} /> Reset Default
-                          </button>
-                        )}
-                      </div>
-
-                      <ul className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar Montserrat">
-                        {itemsToShow.map((variantId) => {
-                          const pantryItem = pantryMap[variantId];
-
-                          if (!pantryItem) {
-                            console.warn('Missing pantry item for variantId:', variantId);
-                            return null;
-                          }
-
-                          const isMain = pantryItem?.main === true;
-
-
-                          const isSelected = activeIds.includes(variantId);
-                          const itemInSelection = activeItems.find(i => i.product_variant_id === variantId);
-
-                          const quantity = isSelected
-                            ? itemInSelection.quantity
-                            : calculateSmartQuantity(pantryItem.pax, bundle.max_pax);
-
-                          const unitPrice = (pantryItem?.price > 0)
-                            ? pantryItem.price
-                            : (parseFloat(itemInSelection?.price) || 0);
-
-                          const totalPrice = unitPrice * quantity;
-
-                          return (
-                            <li
-                              key={variantId}
-                              onClick={() => isEditing && !isMain && handleToggleItem(bundle, variantId)}
-                              className={`text-sm font-bold flex items-center gap-3 transition-all 
-                                ${isEditing && !isMain ? 'cursor-pointer p-2 rounded-lg hover:bg-emerald-50/50' : ''} 
-                                ${isMain ? 'opacity-100 cursor-not-allowed' : ''}
-                                ${isSelected ? 'text-stone-700' : 'text-stone-400'}
-                              `}
-                            >
-                              <div className={`w-5 h-5 rounded flex items-center justify-center transition-all border-2 
-                                ${isMain
-                                  ? 'bg-emerald-300 border-emerald-300'
-                                  : isSelected
-                                    ? 'bg-emerald-600 border-emerald-600'
-                                    : 'bg-transparent border-stone-300'
-                                }`}
-                              >
-                                {(isSelected || isMain) && (
-                                  <Check size={14} className="text-white stroke-[4px]" />
-                                )}
-                              </div>
-                              <div className="flex justify-between items-center w-full">
-                                <span>
-                                  {formatItemName(pantryItem, quantity)}
-                                </span>
-
-                                {isEditing && (
-                                  <span
-                                    className={`text-[10px] font-black whitespace-nowrap
-        ${isSelected ? 'text-emerald-700' : 'text-stone-400'}
-      `}
-                                  >
-                                    ₱{totalPrice.toLocaleString()}
-                                  </span>
-                                )}
-                              </div>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </div>
-                  </div>
-
-                  <div className="p-8 pt-0 mt-auto">
-                    <div className="flex items-center justify-between gap-4 Montserrat">
-                      <div>
-                        <span className="block text-[10px] font-black text-stone-400 uppercase tracking-widest">
-                          {isEditing ? 'Live Custom Price' : 'Bundle Price'}
-                        </span>
-                        <div className="flex flex-col items-start">
-                          {/* Original Price */}
-                          <span className="text-sm text-stone-400 line-through font-bold">
-                            ₱{rawTotal.toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2
-                            })}
-                          </span>
-
-                          {/* Discounted Designed Price */}
-                          <span className="text-3xl font-black text-emerald-900 tracking-tighter">
-                            ₱{designedPrice.toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2
-                            })}
-                          </span>
-                        </div>
-                      </div>
-                      <a
-                        href="https://m.me/mb.castro.779"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="bg-emerald-800 hover:bg-emerald-900 text-white px-3 py-4 rounded-2xl font-black tracking-widest uppercase text-xs shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95"
-                      >
-                        <MessageCircle size={18} />
-                        Order Now
-                      </a>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {bundles.map(bundle => (
+              <BundleCard
+                key={bundle.id}
+                bundle={bundle}
+                pantryMap={pantryMap}
+                smartSides={smartSidesMap[bundle.id]}
+                customSelections={customSelections}
+                editingId={editingId}
+                setEditingId={setEditingId}
+                handleToggleItem={handleToggleItem}
+                resetBundle={resetBundle}
+                handleDownloadPoster={handleDownloadPoster}
+                generatingId={generatingId}
+                paxQuery={paxQuery}
+              />
+            ))}
           </div>
         )}
       </div>
 
       {/* ✅ HIDDEN POSTER RENDER (REQUIRED FOR DOWNLOAD) */}
       <div style={{ position: 'absolute', top: '-9999px', left: '-9999px' }}>
-        {selectedBundle && (
+        {generatingId && selectedBundle && (
           <div id="ma-donna-poster-final">
             <PosterTemplate bundle={selectedBundle} pantryMap={pantryMap} />
           </div>

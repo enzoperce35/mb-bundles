@@ -142,4 +142,4 @@ const PosterTemplate = ({ bundle, pantryMap }) => {
   );
 };
 
-export default PosterTemplate;
+export default React.memo(PosterTemplate);
