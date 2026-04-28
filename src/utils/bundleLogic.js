@@ -4,16 +4,26 @@
 
 export const getEditableVariants = (pantry, bundleMaxPax) => {
   const editableSides = [];
+  const isMinBundle = bundleMaxPax <= 5;
 
   pantry.forEach(product => {
-    // 1. Skip if the product only contains "main" dishes
-    const sideVariants = product.variants.filter(v => !v.main);
-    if (sideVariants.length === 0) return;
+    // 1. FILTER: Apply the solo vs party rules
+    const allowedPool = product.variants.filter(v => {
+      if (v.main) return false;
 
-    // 2. Find the "Best Fit" variant
-    // We look for the one where variant.pax is closest to bundleMaxPax
-    // but typically we prefer the one that doesn't exceed it unless it's the only option
-    const bestFit = sideVariants.reduce((prev, curr) => {
+      if (isMinBundle) {
+        // If it's a 5-pax bundle, exclude big Party Sizes
+        return v.isPartySize !== true;
+      } else {
+        // If it's 10-pax or more, exclude tiny Solo items
+        return v.isSoloOnly !== true;
+      }
+    });
+
+    if (allowedPool.length === 0) return;
+
+    // 2. BEST FIT: Match the closest size from the allowed list
+    const bestFit = allowedPool.reduce((prev, curr) => {
       const prevDiff = Math.abs(prev.pax - bundleMaxPax);
       const currDiff = Math.abs(curr.pax - bundleMaxPax);
       return currDiff < prevDiff ? curr : prev;

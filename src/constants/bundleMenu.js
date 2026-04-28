@@ -20,7 +20,8 @@ export const HARDCODED_PANTRY = [
     rails_parent_id: 10,
     public_id: 'v5ka545zjxkasejhml90',
     variants: [
-      { name: "Chicken Wings", mb_name: "Chicken Wings 6pcs Assorted", rails_variant_id: 53, price: 145, pax: 2.5, count: 6 },
+      { name: "Chicken Wings", mb_name: "Chicken Wings 6pcs Assorted", rails_variant_id: 53, price: 145, pax: 2.5, count: 6, isPartySize: true },
+      { name: "Chicken Wings", mb_name: "Chicken Wings 10pcs Assorted", rails_variant_id: 57, price: 235, pax: 4, count: 10, isSoloOnly: true },
     ]
   },
   {
@@ -28,7 +29,8 @@ export const HARDCODED_PANTRY = [
     rails_parent_id: 23,
     public_id: 'tswlxicsjvgewknlibdq',
     variants: [
-      { name: "Empanada", mb_name: "Empanada 5pcs", rails_variant_id: 68, price: 100, pax: 3, count: 5 },
+      { name: "Empanada", mb_name: "Empanada 5pcs", rails_variant_id: 68, price: 100, pax: 3, count: 5, isPartySize: true },
+      { name: "Empanada", mb_name: "Empanada 10pcs", rails_variant_id: 69, price: 200, pax: 6, count: 10, isSoloOnly: true },
     ]
   },
   {
@@ -36,10 +38,11 @@ export const HARDCODED_PANTRY = [
     rails_parent_id: 20,
     public_id: 'q2aow53houndsz29bz9j',
     variants: [
-      { name: "Small Bilao Chicken Fillet", mb_name: "Chicken Fillet Small", price: 320, rails_variant_id: 83, pax: 8 },
-      { name: "Medium Bilao Chicken Fillet", mb_name: "Chicken Fillet Medium", price: 610, rails_variant_id: 84, pax: 16 },
-      { name: "Large Bilao Chicken Fillet", mb_name: "Chicken Fillet Large", rails_variant_id: 85, price: 900, pax: 24 },
-      { name: "XL Bilao Chicken Fillet", mb_name: "Chicken Fillet XL", rails_variant_id: 86, price: 1200, pax: 32 },
+      { name: "Set Chicken Fillet", mb_name: "Chicken Fillet Solo", price: 145, rails_variant_id: 65, pax: 4, isSoloOnly: true },
+      { name: "Small Bilao Chicken Fillet", mb_name: "Chicken Fillet Small", price: 320, rails_variant_id: 83, pax: 8, isPartySize: true },
+      { name: "Medium Bilao Chicken Fillet", mb_name: "Chicken Fillet Medium", price: 610, rails_variant_id: 84, pax: 16, isPartySize: true },
+      { name: "Large Bilao Chicken Fillet", mb_name: "Chicken Fillet Large", rails_variant_id: 85, price: 900, pax: 24, isPartySize: true },
+      { name: "XL Bilao Chicken Fillet", mb_name: "Chicken Fillet XL", rails_variant_id: 86, price: 1200, pax: 32, isPartySize: true },
     ]
   },
   {
@@ -55,7 +58,8 @@ export const HARDCODED_PANTRY = [
     rails_parent_id: 48,
     public_id: 'dddndsrtzhs662weak9t',
     variants: [
-      { name: "Set Fish Fillet", mb_name: "Fish Fillet Solo", price: 130, rails_variant_id: 182, pax: 2.7 },
+      { name: "Set Fish Fillet", mb_name: "Fish Fillet Solo", price: 130, rails_variant_id: 182, pax: 2.7, isSoloOnly: true },
+      { name: "Small Bilao Fish Fillet", mb_name: "Fish Fillet Bilao", price: 390, rails_variant_id: 198, pax: 9, isPartySize: true },
     ]
   },
   {
