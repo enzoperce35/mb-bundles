@@ -201,7 +201,7 @@ const BundleList = () => {
 
         try {
           const dataUrl = await htmlToImage.toPng(node, {
-            pixelRatio: 2,
+            pixelRatio: 1.5,
             cacheBust: true,
             useCORS: true
           });
@@ -214,6 +214,7 @@ const BundleList = () => {
           console.error("Download failed:", err);
         } finally {
           setGeneratingId(null);
+          setSelectedBundle(null);
         }
       });
     });
@@ -333,7 +334,7 @@ const BundleList = () => {
                         className="group flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-stone-500 hover:text-emerald-700 transition-colors"
                       >
                         <Share2 size={14} className="group-hover:rotate-12 transition-transform" />
-                        {generatingId === bundle.id ? "Processing..." : "Export Poster"}
+                        {generatingId === bundle.id ? "Processing..." : "Share Poster"}
                       </button>
                     </div>
 
