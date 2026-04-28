@@ -119,27 +119,27 @@ const BundleList = () => {
     setCustomSelections(prev => {
       const currentItems = prev[bundleId] || bundle.bundle_items;
       const exists = currentItems.find(i => i.product_variant_id === variantId);
-
-      // 🛑 MINIMUM CHECK: If item exists (trying to uncheck) and count is <= 3, block it.
-      if (exists && currentItems.length <= minItems) {
-        alert(`Selection must have at least ${minItems} items.`);
-        return prev;
-      }
-
+    
       let newItems;
+    
       if (exists) {
+        // remove item
         newItems = currentItems.filter(i => i.product_variant_id !== variantId);
       } else {
         const smartQty = calculateSmartQuantity(variantData?.pax, bundle.max_pax);
-        newItems = [...currentItems, {
-          product_variant_id: variantId,
-          quantity: smartQty,
-          price: variantData?.price || 0
-        }];
+    
+        newItems = [
+          ...currentItems,
+          {
+            product_variant_id: variantId,
+            quantity: smartQty,
+            price: variantData?.price || 0,
+            _clickedAt: Date.now() // 🆕 track order
+          }
+        ];
       }
-
+    
       const updated = { ...prev, [bundleId]: newItems };
-      // ✅ REMEMBER SELECTION: Saves to local storage for future interactions
       localStorage.setItem('servewise_bundle_customizations', JSON.stringify(updated));
       return updated;
     });
@@ -253,19 +253,52 @@ const BundleList = () => {
 
               const displayBundle = { ...bundle, bundle_items: activeItems };
               const smartSidesForThisBundle = smartSidesMap[bundle.id] || [];
-              const itemsToShowRaw = isEditing
-                ? [...new Set([...activeIds, ...smartSidesForThisBundle.map(v => v.rails_variant_id)])]
-                : activeIds;
+              const itemsToShowRaw = (() => {
+                if (!isEditing) return activeIds;
+              
+                const resultMap = {};
+              
+                // ✅ PRIORITY: existing bundle items
+                activeItems.forEach(item => {
+                  const p = pantryMap[item.product_variant_id];
+                  if (!p) return;
+              
+                  resultMap[p.rails_parent_id] = item.product_variant_id;
+                });
+              
+                // ✅ FALLBACK: bestFit only if missing
+                smartSidesForThisBundle.forEach(variant => {
+                  if (!resultMap[variant.rails_parent_id]) {
+                    resultMap[variant.rails_parent_id] = variant.rails_variant_id;
+                  }
+                });
+              
+                return Object.values(resultMap);
+              })();
 
               // ✅ SORT: main items first
-              const itemsToShow = itemsToShowRaw.sort((a, b) => {
+              const itemsToShow = [...itemsToShowRaw].sort((a, b) => {
                 const itemA = pantryMap[a];
                 const itemB = pantryMap[b];
-
-                const isMainA = itemA?.main ? 1 : 0;
-                const isMainB = itemB?.main ? 1 : 0;
-
-                return isMainB - isMainA; // main=true goes first
+              
+                const aIsMain = itemA?.main ? 3 : 0;
+                const bIsMain = itemB?.main ? 3 : 0;
+              
+                // items originally from backend bundle (default selected)
+                const aIsDefault = activeItems.some(i => i.product_variant_id === a) ? 2 : 0;
+                const bIsDefault = activeItems.some(i => i.product_variant_id === b) ? 2 : 0;
+              
+                // click order (newly added go bottom)
+                const aTime = activeItems.find(i => i.product_variant_id === a)?._clickedAt || 0;
+                const bTime = activeItems.find(i => i.product_variant_id === b)?._clickedAt || 0;
+              
+                const aScore = aIsMain + aIsDefault;
+                const bScore = bIsMain + bIsDefault;
+              
+                if (bScore !== aScore) return bScore - aScore;
+              
+                // within same group → oldest first, newest last
+                return aTime - bTime;
               });
 
               // CALCULATION: Recalculate on every toggle
