@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { Clock, Users, RotateCcw, Check, Share2, MessageCircle, Edit3, Save } from 'lucide-react';
+import { Clock, Users, RotateCcw, Check, MessageCircle, Edit3, Save } from 'lucide-react';
 import { calculateSmartQuantity, formatItemName } from '../utils/bundleLogic';
 import { getDesignedBundlePrice } from '../utils/discountLogic';
 
@@ -13,7 +13,6 @@ const BundleCard = ({
     handleToggleItem,
     resetBundle,
     handleOrderNow,
-    generatingId,
     paxQuery
 }) => {
     const isEditing = editingId === bundle.id;
@@ -98,10 +97,11 @@ const BundleCard = ({
             {/* HEADER */}
             <div className="p-8 pb-0">
                 <div className="flex justify-between items-start mb-4 Montserrat">
+                    {/* EDIT BUTTON */}
                     <button
                         onClick={() => setEditingId(isEditing ? null : bundle.id)}
                         className={`flex items-center gap-2 text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest transition-all 
-                        ${isEditing
+            ${isEditing
                                 ? 'bg-orange-600 text-white animate-pulse'
                                 : 'bg-emerald-800 text-white hover:bg-emerald-700'
                             }`}
@@ -110,14 +110,11 @@ const BundleCard = ({
                         {isEditing ? 'Finish Editing' : 'Edit Inclusions'}
                     </button>
 
-                    <button
-                        onClick={() => handleOrderNow(bundle)}
-                        disabled={generatingId === bundle.id}
-                        className="group flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-stone-500 hover:text-emerald-700 transition-colors"
-                    >
-                        <Share2 size={14} className="group-hover:rotate-12 transition-transform" />
-                        {generatingId === bundle.id ? "Processing..." : "Share Poster"}
-                    </button>
+                    {/* PAX COUNT (Moved here) */}
+                    <div className="flex items-center gap-1.5 px-3 py-1 bg-stone-200/50 rounded-full text-stone-600 font-black text-[10px] uppercase tracking-tighter">
+                        <Users size={12} />
+                        {bundle.max_pax} Pax
+                    </div>
                 </div>
 
                 <h2 className="text-3xl font-black text-stone-800 tracking-tighter leading-none mb-2 uppercase Montserrat">
@@ -125,10 +122,7 @@ const BundleCard = ({
                 </h2>
 
                 <div className="flex items-center gap-4 Montserrat">
-                    <p className="text-stone-400 font-bold text-xs uppercase flex items-center gap-1.5">
-                        <Users size={14} />
-                        {bundle.max_pax} Pax
-                    </p>
+                    {/* Lead time remains here for balance */}
                     <p className="text-orange-700 font-bold text-xs uppercase flex items-center gap-1.5">
                         <Clock size={14} /> {bundle.lead_time_days || 2} Days
                     </p>
@@ -240,11 +234,10 @@ const BundleCard = ({
                     {/* ORDER BUTTON */}
                     <button
                         onClick={() => handleOrderNow(bundle)}
-                        disabled={generatingId === bundle.id}
-                        className="bg-emerald-800 hover:bg-emerald-900 text-white px-3 py-4 rounded-2xl font-black tracking-widest uppercase text-xs shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95"
+                        className="bg-emerald-800 hover:bg-emerald-900 text-white px-6 py-4 rounded-2xl font-black tracking-widest uppercase text-xs shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95"
                     >
                         <MessageCircle size={18} />
-                        {generatingId === bundle.id ? "Processing..." : "Order Now"}
+                        Order Now
                     </button>
 
                 </div>

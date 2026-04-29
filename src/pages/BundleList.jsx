@@ -64,7 +64,6 @@ const BundleList = () => {
   const [loading, setLoading] = useState(true);
 
   const [selectedBundle, setSelectedBundle] = useState(null);
-  const [generatingId, setGeneratingId] = useState(null);
 
   const [editingId, setEditingId] = useState(null);
   const [customSelections, setCustomSelections] = useState({});
@@ -118,6 +117,47 @@ const BundleList = () => {
     return map;
   }, [flatPantry, bundles, allProducts]);
 
+  const handleToggleItem = (bundle, variantId) => {
+    if (isUpdating) return;
+  
+    const variantData = pantryMap[variantId];
+    // Prevent toggling if data is missing or if it's a 'Main' dish
+    if (!variantData || variantData.main) return;
+  
+    setIsUpdating(true);
+  
+    setCustomSelections(prev => {
+      const currentItems = prev[bundle.id] || bundle.bundle_items || [];
+      const exists = currentItems.find(i => i.product_variant_id === variantId);
+  
+      let newItems;
+      if (exists) {
+        // Remove the item
+        newItems = currentItems.filter(i => i.product_variant_id !== variantId);
+      } else {
+        // Add the item with a smart quantity based on pax
+        const smartQty = calculateSmartQuantity(variantData?.pax, bundle.max_pax);
+  
+        newItems = [
+          ...currentItems,
+          {
+            product_variant_id: variantId,
+            quantity: smartQty,
+            price: variantData?.price || 0,
+          }
+        ];
+      }
+  
+      const updated = { ...prev, [bundle.id]: newItems };
+      // Save to localStorage so selection is remembered for future interactions
+      localStorage.setItem('servewise_bundle_customizations', JSON.stringify(updated));
+      return updated;
+    });
+  
+    // Small delay to prevent double-clicks
+    setTimeout(() => setIsUpdating(false), 16);
+  };
+
   /* =========================
      SMART SIDES
   ========================= */
@@ -153,6 +193,29 @@ const BundleList = () => {
     fetchData();
   }, [paxQuery]);
 
+  useEffect(() => {
+    const saved = localStorage.getItem('servewise_bundle_customizations');
+    if (!saved) return;
+  
+    try {
+      const parsed = JSON.parse(saved);
+      // Safety check: ensure the saved items actually exist in our current pantry
+      const validVariantIds = new Set(flatPantry.map(p => p.rails_variant_id));
+  
+      const cleaned = Object.fromEntries(
+        Object.entries(parsed).map(([bundleId, items]) => [
+          bundleId,
+          items.filter(i => validVariantIds.has(i.product_variant_id))
+        ])
+      );
+  
+      setCustomSelections(cleaned);
+    } catch (err) {
+      console.error("Failed to load customizations", err);
+      localStorage.removeItem('servewise_bundle_customizations');
+    }
+  }, [flatPantry]);
+
   /* =========================
      ORDER FLOW (MODAL PIPELINE)
   ========================= */
@@ -179,7 +242,11 @@ const BundleList = () => {
       designed_price: designedPrice
     };
 
-    setSelectedBundle(orderPayload);
+    setSelectedBundle({
+      ...bundle,
+      bundle_items: sortedItems,
+      designed_price: designedPrice
+    });
     setOrderModalOpen(true);
     setOrderStep("loading");
 
@@ -267,6 +334,16 @@ const BundleList = () => {
     );
   };
 
+  const resetBundle = (bundleId) => {
+    setCustomSelections(prev => {
+      const updated = { ...prev };
+      delete updated[bundleId];
+      localStorage.setItem('servewise_bundle_customizations', JSON.stringify(updated));
+      return updated;
+    });
+    setEditingId(null); // Close the edit UI
+  };
+
   /* =========================
      UI
   ========================= */
@@ -302,9 +379,12 @@ const BundleList = () => {
                 pantryMap={pantryMap}
                 smartSides={smartSidesMap[bundle.id]}
                 customSelections={customSelections}
+                editingId={editingId}
+                setEditingId={setEditingId}
+                handleToggleItem={handleToggleItem}
+                resetBundle={resetBundle}
                 setCustomSelections={setCustomSelections}
                 handleOrderNow={handleOrderNow}
-                generatingId={generatingId}
                 paxQuery={paxQuery}
               />
             ))}
