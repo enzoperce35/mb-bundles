@@ -355,32 +355,62 @@ const BundleList = () => {
               )}
 
               {/* READY STATE */}
+              {/* READY STATE - Instruction Flow */}
               {orderStep === "ready" && (
-                <>
-                  <h2 className="text-lg font-bold mb-2">
-                    Your order is ready!
-                  </h2>
+                <div className="animate-in fade-in zoom-in duration-300 text-left">
+                  <div className="text-center mb-6">
+                    <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto text-3xl mb-2">
+                      🍽️
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-800 Montserrat">Almost there!</h2>
+                    <p className="text-gray-500 text-sm">Greetings! Finalize your orders with these 2 simple steps.</p>
+                  </div>
 
-                  <p className="text-xs text-gray-500 mb-4">
-                    You can now copy or send it to Messenger.
-                  </p>
+                  <div className="space-y-6 mb-8">
+                    {/* STEP 1 */}
+                    <div className="flex gap-4">
+                      <div className="flex-shrink-0 w-8 h-8 bg-emerald-600 text-white rounded-full flex items-center justify-center font-bold">
+                        1
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-800">Copy your Order Details</p>
+                        <p className="text-sm text-gray-600 mb-3">Click the button below to save a copy of your order details.</p>
+                        <button
+                          onClick={handleCopyOrder}
+                          className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold py-2 px-4 rounded-lg transition-all active:scale-95"
+                        >
+                          Copy Order Button
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* STEP 2 */}
+                    <div className="flex gap-4">
+                      <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
+                        2
+                      </div>
+                      <div>
+                        <p className="font-bold text-gray-800">Paste in Messenger</p>
+                        <p className="text-sm text-gray-600 mb-3">Open our Messenger and simply "Paste" your copy.</p>
+                        <button
+                          onClick={handleOpenMessenger}
+                          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2 px-4 rounded-lg transition-all active:scale-95"
+                        >
+                          Open Messenger
+                        </button>
+                      </div>
+                    </div>
+                  </div>
 
                   <button
-                    onClick={handleCopyOrder}
-                    className="bg-emerald-600 text-white px-4 py-2 rounded w-full mb-2"
+                    onClick={() => setOrderModalOpen(false)}
+                    className="w-full text-gray-400 text-xs text-center uppercase tracking-widest hover:text-gray-600 transition-colors"
                   >
-                    Copy Order
+                    Close Instructions
                   </button>
-
-                  <button
-                    onClick={handleOpenMessenger}
-                    className="bg-blue-600 text-white px-4 py-2 rounded w-full"
-                  >
-                    Open Messenger
-                  </button>
-                </>
+                </div>
               )}
-
+              
               {/* ERROR STATE */}
               {orderStep === "error" && (
                 <>
