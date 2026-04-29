@@ -100,15 +100,38 @@ const BundleList = () => {
 
   const handleToggleItem = (bundle, variantId) => {
     if (isUpdating || pantryMap[variantId]?.main) return;
+
+    const currentItems = customSelections[bundle.id] || bundle.bundle_items || [];
+    const isAlreadySelected = currentItems.some(i => i.product_variant_id === variantId);
+    
+    // Define the Minimum Floor
+    const minRequired = bundle.max_pax <= 5 ? 3 : 2;
+
+    // RULE: If they try to deselect, check if they are already at the minimum
+    if (isAlreadySelected && currentItems.length <= minRequired) {
+      alert(`Must have at least ${minRequired} items selected for ${bundle.max_pax} pax.`);
+      return;
+    }
+
+    // If adding (isAlreadySelected is false), there is no upper limit based on your request.
+    
     setIsUpdating(true);
     setCustomSelections(prev => {
       const items = prev[bundle.id] || bundle.bundle_items || [];
       const exists = items.find(i => i.product_variant_id === variantId);
-      const newItems = exists ? items.filter(i => i.product_variant_id !== variantId) :
-        [...items, { product_variant_id: variantId, quantity: calculateSmartQuantity(pantryMap[variantId]?.pax, bundle.max_pax), price: pantryMap[variantId]?.price || 0 }];
+      
+      const newItems = exists 
+        ? items.filter(i => i.product_variant_id !== variantId) 
+        : [...items, { 
+            product_variant_id: variantId, 
+            quantity: calculateSmartQuantity(pantryMap[variantId]?.pax, bundle.max_pax), 
+            price: pantryMap[variantId]?.price || 0 
+          }];
+
       localStorage.setItem('servewise_bundle_customizations', JSON.stringify({ ...prev, [bundle.id]: newItems }));
       return { ...prev, [bundle.id]: newItems };
     });
+    
     setTimeout(() => setIsUpdating(false), 16);
   };
 
