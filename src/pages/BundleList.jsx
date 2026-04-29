@@ -13,6 +13,31 @@ import BundleCard from '../components/BundleCard';
 import OrderModal from '../components/OrderModal';
 import logo from '../assets/images/mb-logo-warm-golden-yellow-removebg-preview.png';
 
+const CONSTANT_FLAT_PANTRY = HARDCODED_PANTRY.flatMap(product =>
+  (product.variants || []).map(variant => ({
+    ...variant,
+    product_name: product.product_name,
+    rails_parent_id: product.rails_parent_id,
+    public_id: product.public_id
+  }))
+);
+
+const BundleSkeleton = () => (
+  <div className="bg-orange-50/50 rounded-3xl p-8 h-[500px] animate-pulse border-b-8 border-stone-200">
+    <div className="h-8 w-48 bg-stone-200 rounded-lg mb-4"></div>
+    <div className="h-4 w-32 bg-stone-200 rounded-lg mb-8"></div>
+    <div className="space-y-3">
+      {[1, 2, 3, 4, 5].map(i => (
+        <div key={i} className="h-6 w-full bg-stone-200 rounded"></div>
+      ))}
+    </div>
+    <div className="mt-auto pt-10 flex justify-between">
+      <div className="h-10 w-24 bg-stone-200 rounded-xl"></div>
+      <div className="h-10 w-32 bg-stone-200 rounded-xl"></div>
+    </div>
+  </div>
+);
+
 const BundleList = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -31,19 +56,27 @@ const BundleList = () => {
   const [orderStep, setOrderStep] = useState("idle");
   const [finalOrderMessage, setFinalOrderMessage] = useState("");
 
-  const flatPantry = useMemo(() => flattenPantry(HARDCODED_PANTRY), []);
+  const [isDataReady, setIsDataReady] = useState(false);
+
+  // Inside BundleList.jsx
+  const [isCalculating, setIsCalculating] = useState(true);
 
   const pantryMap = useMemo(() => {
+    if (loading) return {}; // Don't calculate while the API is still fetching
+
     const map = {};
-    flatPantry.forEach(item => { map[item.rails_variant_id] = { ...item, price: parseFloat(item.price || 0) }; });
-    allProducts.forEach(product => {
-      product.product_variants?.forEach(v => { if (map[v.id]) map[v.id].price = parseFloat(v.price || 0); });
+    CONSTANT_FLAT_PANTRY.forEach(item => {
+      map[item.rails_variant_id] = { ...item, price: parseFloat(item.price || 0) };
     });
-    bundles.forEach(b => b.bundle_items?.forEach(bi => {
-      if (map[bi.product_variant_id]?.price === 0) map[bi.product_variant_id].price = parseFloat(bi.price || 0);
-    }));
+
+    allProducts.forEach(product => {
+      product.product_variants?.forEach(v => {
+        if (map[v.id]) map[v.id].price = parseFloat(v.price || 0);
+      });
+    });
+
     return map;
-  }, [flatPantry, bundles, allProducts]);
+  }, [loading, allProducts]); // Only runs ONCE after loading finishes
 
   const smartSidesMap = useMemo(() => {
     const map = {};
@@ -71,7 +104,7 @@ const BundleList = () => {
     setCustomSelections(prev => {
       const items = prev[bundle.id] || bundle.bundle_items || [];
       const exists = items.find(i => i.product_variant_id === variantId);
-      const newItems = exists ? items.filter(i => i.product_variant_id !== variantId) : 
+      const newItems = exists ? items.filter(i => i.product_variant_id !== variantId) :
         [...items, { product_variant_id: variantId, quantity: calculateSmartQuantity(pantryMap[variantId]?.pax, bundle.max_pax), price: pantryMap[variantId]?.price || 0 }];
       localStorage.setItem('servewise_bundle_customizations', JSON.stringify({ ...prev, [bundle.id]: newItems }));
       return { ...prev, [bundle.id]: newItems };
@@ -84,12 +117,15 @@ const BundleList = () => {
     const sorted = [...activeItems].sort((a, b) => (pantryMap[b.product_variant_id]?.main ? 1 : 0) - (pantryMap[a.product_variant_id]?.main ? 1 : 0));
     const total = sorted.reduce((acc, i) => acc + ((pantryMap[i.product_variant_id]?.price || 0) * (i.quantity || 1)), 0);
     const price = getDesignedBundlePrice(total, paxQuery);
+    const htmlToImage = await import('html-to-image');
 
     setSelectedBundle({ ...bundle, bundle_items: sorted, designed_price: price });
     setOrderModalOpen(true);
     setOrderStep("loading");
 
     try {
+      const { toPng } = await import('html-to-image');
+      
       setTimeout(async () => {
         const node = document.getElementById("ma-donna-poster-final");
         const dataUrl = await htmlToImage.toPng(node, { pixelRatio: 0.5, cacheBust: true, useCORS: true });
@@ -102,7 +138,7 @@ const BundleList = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[url('https://images.unsplash.com/photo-1516062423079-7ca13cdc7f5a?q=80&w=2083')] bg-cover bg-fixed p-6">
+    <div className="min-h-screen bg-[url('https://images.unsplash.com/photo-1516062423079-7ca13cdc7f5a?auto=format&fit=crop&w=1200&q=60')] bg-cover bg-fixed p-6 font-sans contain: 'paint'">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
       <div className="relative z-10 max-w-5xl mx-auto">
         <header className="flex justify-between items-center mb-10">
@@ -110,10 +146,24 @@ const BundleList = () => {
           <img src={logo} alt="Ma'Donna" className="w-32 md:w-44" />
         </header>
 
-        {loading ? <div className="flex justify-center py-20 animate-spin h-12 w-12 border-b-2 border-emerald-500 rounded-full mx-auto" /> : (
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-500">
+            {/* Show 4 skeletons while loading */}
+            {[1, 2, 3, 4].map(i => <BundleSkeleton key={i} />)}
+          </div>
+        ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {bundles.map(b => (
-              <BundleCard key={b.id} bundle={b} pantryMap={pantryMap} smartSides={smartSidesMap[b.id]} customSelections={customSelections} editingId={editingId} setEditingId={setEditingId} handleToggleItem={handleToggleItem} resetBundle={() => setEditingId(null)} handleOrderNow={handleOrderNow} paxQuery={paxQuery} />
+            {bundles.map((b, index) => (
+              <div
+                key={b.id}
+                style={{
+                  animationDelay: `${index * 100}ms`, // Staggers the load
+                  animationFillMode: 'both'
+                }}
+                className="animate-in fade-in slide-in-from-bottom-4"
+              >
+                <BundleCard key={b.id} bundle={b} pantryMap={pantryMap} smartSides={smartSidesMap[b.id]} customSelections={customSelections} editingId={editingId} setEditingId={setEditingId} handleToggleItem={handleToggleItem} resetBundle={() => setEditingId(null)} handleOrderNow={handleOrderNow} paxQuery={paxQuery} />
+              </div>
             ))}
           </div>
         )}
@@ -122,12 +172,12 @@ const BundleList = () => {
           {selectedBundle && <div id="ma-donna-poster-final"><PosterTemplate bundle={selectedBundle} pantryMap={pantryMap} /></div>}
         </div>
 
-        <OrderModal 
-          isOpen={orderModalOpen} 
-          step={orderStep} 
-          onCopy={() => { navigator.clipboard.writeText(finalOrderMessage); alert("Copied!"); }} 
-          onOpenMessenger={() => window.open("https://m.me/mb.castro.779", "_blank")} 
-          onClose={() => setOrderModalOpen(false)} 
+        <OrderModal
+          isOpen={orderModalOpen}
+          step={orderStep}
+          onCopy={() => { navigator.clipboard.writeText(finalOrderMessage); alert("Copied!"); }}
+          onOpenMessenger={() => window.open("https://m.me/mb.castro.779", "_blank")}
+          onClose={() => setOrderModalOpen(false)}
         />
       </div>
     </div>

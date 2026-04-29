@@ -111,8 +111,8 @@ const BundleCard = ({
                     </button>
 
                     {/* PAX COUNT (Moved here) */}
-                    <div className="flex items-center gap-1.5 px-3 py-1 bg-stone-200/50 rounded-full text-stone-600 font-black text-[10px] uppercase tracking-tighter">
-                        <Users size={12} />
+                    <div className="flex items-center gap-1.5 px-5 py-1.5 bg-stone-200/50 rounded-full text-stone-600 font-black text-[12px] uppercase tracking-tighter">
+                        <Users size={18} />
                         {bundle.max_pax} Pax
                     </div>
                 </div>
