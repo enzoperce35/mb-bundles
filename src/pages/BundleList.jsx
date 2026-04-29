@@ -194,7 +194,7 @@ const BundleList = () => {
 
         // 1. generate image
         const dataUrl = await htmlToImage.toPng(node, {
-          pixelRatio: 1.5,
+          pixelRatio: 0.5,
           cacheBust: true,
           useCORS: true
         });
@@ -311,8 +311,19 @@ const BundleList = () => {
           </div>
         )}
 
-        {/* HIDDEN POSTER */}
-        <div style={{ position: 'absolute', top: '-9999px' }}>
+        {/* =========================
+          HIDDEN POSTER (FIXED)
+        ========================= */}
+        <div
+          style={{
+            position: 'fixed',
+            left: '-100vw',   // Move it far to the left instead of up
+            top: 0,
+            opacity: 0,       // Make it invisible
+            pointerEvents: 'none' // Ensure users can't click it
+          }}
+          aria-hidden="true"
+        >
           {selectedBundle && (
             <div id="ma-donna-poster-final">
               <PosterTemplate bundle={selectedBundle} pantryMap={pantryMap} />
