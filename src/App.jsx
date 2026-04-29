@@ -1,5 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import PaxSelector from './components/PaxSelector';
+import PaxSelector from './pages/PaxSelector';
 import BundleBuilder from './pages/BundleBuilder';
 import BundleList from './pages/BundleList';
 import EditBundle from './pages/BundleEditor';

@@ -107,7 +107,7 @@ const BundleCard = ({
                             }`}
                     >
                         {isEditing ? <Save size={12} /> : <Edit3 size={12} />}
-                        {isEditing ? 'Finish Editing' : 'Edit Inclusions'}
+                        {isEditing ? 'Done Selecting' : 'Select Inclusions'}
                     </button>
 
                     {/* PAX COUNT (Moved here) */}
