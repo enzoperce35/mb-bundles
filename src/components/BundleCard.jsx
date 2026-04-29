@@ -12,7 +12,7 @@ const BundleCard = ({
     setEditingId,
     handleToggleItem,
     resetBundle,
-    handleDownloadPoster,
+    handleOrderNow,
     generatingId,
     paxQuery
 }) => {
@@ -111,7 +111,7 @@ const BundleCard = ({
                     </button>
 
                     <button
-                        onClick={() => handleDownloadPoster(bundle)}
+                        onClick={() => handleOrderNow(bundle)}
                         disabled={generatingId === bundle.id}
                         className="group flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-stone-500 hover:text-emerald-700 transition-colors"
                     >
@@ -238,15 +238,14 @@ const BundleCard = ({
                     </div>
 
                     {/* ORDER BUTTON */}
-                    <a
-                        href="https://m.me/mb.castro.779"
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <button
+                        onClick={() => handleOrderNow(bundle)}
+                        disabled={generatingId === bundle.id}
                         className="bg-emerald-800 hover:bg-emerald-900 text-white px-3 py-4 rounded-2xl font-black tracking-widest uppercase text-xs shadow-lg flex items-center justify-center gap-2 transition-all active:scale-95"
                     >
                         <MessageCircle size={18} />
-                        Order Now
-                    </a>
+                        {generatingId === bundle.id ? "Processing..." : "Order Now"}
+                    </button>
 
                 </div>
             </div>

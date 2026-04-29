@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { HARDCODED_PANTRY } from '../constants/bundleMenu';
-import { ChevronLeft, X, Info, Share2 } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import { getEditableVariants, calculateSmartQuantity } from '../utils/bundleLogic';
 import * as htmlToImage from 'html-to-image';
 import PosterTemplate from '../components/PosterTemplate';
@@ -9,11 +9,40 @@ import logo from '../assets/images/mb-logo-warm-golden-yellow-removebg-preview.p
 import { getDesignedBundlePrice } from '../utils/discountLogic';
 import BundleCard from '../components/BundleCard';
 
-const isMessengerWebView = () => {
-  const ua = navigator.userAgent || '';
-  return /FBAN|FBAV|Instagram|Messenger/i.test(ua);
+/* =========================
+   CLOUDINARY CONFIG
+========================= */
+const CLOUDINARY_UPLOAD_URL =
+  "https://api.cloudinary.com/v1_1/dvgveqqtj/image/upload";
+
+const CLOUDINARY_UPLOAD_PRESET =
+  "servewise_unsigned";
+
+/* =========================
+   UPLOADER
+========================= */
+const uploadToCloudinary = async (base64Image) => {
+  const formData = new FormData();
+  formData.append("file", base64Image);
+  formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+
+  const res = await fetch(CLOUDINARY_UPLOAD_URL, {
+    method: "POST",
+    body: formData
+  });
+
+  const data = await res.json();
+
+  if (!data.secure_url) {
+    throw new Error("Cloudinary upload failed");
+  }
+
+  return data.secure_url;
 };
 
+/* =========================
+   FLATTEN PANTRY
+========================= */
 const flattenPantry = (pantry) => {
   return pantry.flatMap(product =>
     (product.variants || []).map(variant => ({
@@ -36,14 +65,29 @@ const BundleList = () => {
 
   const [selectedBundle, setSelectedBundle] = useState(null);
   const [generatingId, setGeneratingId] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
 
   const [editingId, setEditingId] = useState(null);
   const [customSelections, setCustomSelections] = useState({});
   const [isUpdating, setIsUpdating] = useState(false);
 
+
+  /* =========================
+     MODAL STATE (NEW)
+  ========================= */
+  const [orderModalOpen, setOrderModalOpen] = useState(false);
+  const [orderLoading, setOrderLoading] = useState(false);
+  const [orderStep, setOrderStep] = useState("idle");
+  const [orderMessage, setOrderMessage] = useState("");
+  const [cloudUrl, setCloudUrl] = useState("");
+
   const flatPantry = useMemo(() => flattenPantry(HARDCODED_PANTRY), []);
 
+  const [finalOrderMessage, setFinalOrderMessage] = useState("");
+  const [finalCloudUrl, setFinalCloudUrl] = useState("");
+
+  /* =========================
+     PANTRY MAP
+  ========================= */
   const pantryMap = useMemo(() => {
     const map = {};
 
@@ -64,9 +108,9 @@ const BundleList = () => {
 
     bundles.forEach(bundle => {
       bundle.bundle_items?.forEach(bi => {
-        const id = bi.product_variant_id;
-        if (map[id] && map[id].price === 0) {
-          map[id].price = parseFloat(bi.price || 0);
+        const variantId = bi.product_variant_id;
+        if (map[variantId] && map[variantId].price === 0) {
+          map[variantId].price = parseFloat(bi.price || 0);
         }
       });
     });
@@ -74,6 +118,9 @@ const BundleList = () => {
     return map;
   }, [flatPantry, bundles, allProducts]);
 
+  /* =========================
+     SMART SIDES
+  ========================= */
   const smartSidesMap = useMemo(() => {
     const map = {};
     bundles.forEach(bundle => {
@@ -82,18 +129,9 @@ const BundleList = () => {
     return map;
   }, [bundles]);
 
-  useEffect(() => {
-    const saved = localStorage.getItem('servewise_bundle_customizations');
-    if (!saved) return;
-
-    try {
-      const parsed = JSON.parse(saved);
-      setCustomSelections(parsed);
-    } catch {
-      localStorage.removeItem('servewise_bundle_customizations');
-    }
-  }, []);
-
+  /* =========================
+     FETCH DATA
+  ========================= */
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -115,131 +153,148 @@ const BundleList = () => {
     fetchData();
   }, [paxQuery]);
 
-  const handleToggleItem = (bundle, variantId) => {
-    if (isUpdating) return;
+  /* =========================
+     ORDER FLOW (MODAL PIPELINE)
+  ========================= */
+  const handleOrderNow = async (bundle) => {
+    const activeItems = customSelections[bundle.id] || bundle.bundle_items || [];
 
-    const variant = pantryMap[variantId];
-    if (!variant || variant.main) return;
-
-    setIsUpdating(true);
-
-    setCustomSelections(prev => {
-      const current = prev[bundle.id] || bundle.bundle_items || [];
-      const exists = current.find(i => i.product_variant_id === variantId);
-
-      let updatedItems;
-
-      if (exists) {
-        updatedItems = current.filter(i => i.product_variant_id !== variantId);
-      } else {
-        const qty = calculateSmartQuantity(variant?.pax, bundle.max_pax);
-        updatedItems = [
-          ...current,
-          {
-            product_variant_id: variantId,
-            quantity: qty,
-            price: variant?.price || 0,
-            _clickedAt: Date.now()
-          }
-        ];
-      }
-
-      const updated = { ...prev, [bundle.id]: updatedItems };
-      localStorage.setItem('servewise_bundle_customizations', JSON.stringify(updated));
-
-      return updated;
+    const sortedItems = [...activeItems].sort((a, b) => {
+      const isMainA = pantryMap[a.product_variant_id]?.main ? 1 : 0;
+      const isMainB = pantryMap[b.product_variant_id]?.main ? 1 : 0;
+      return isMainB - isMainA;
     });
 
-    setTimeout(() => setIsUpdating(false), 100);
-  };
-
-  const handleDownloadPoster = async (bundle) => {
-    const items = customSelections[bundle.id] || bundle.bundle_items || [];
-
-    const sorted = [...items];
-
-    const total = sorted.reduce((acc, item) => {
+    const rawTotal = sortedItems.reduce((acc, item) => {
       const p = pantryMap[item.product_variant_id];
-      const price = p?.price || item.price || 0;
-      return acc + price * (item.quantity || 1);
+      const unitPrice = p?.price > 0 ? p.price : (parseFloat(item.price) || 0);
+      return acc + (unitPrice * (item.quantity || 1));
     }, 0);
 
-    const designed = getDesignedBundlePrice(total, paxQuery);
+    const designedPrice = getDesignedBundlePrice(rawTotal, paxQuery);
 
-    setSelectedBundle({
+    const orderPayload = {
       ...bundle,
-      bundle_items: sorted,
-      designed_price: designed
-    });
+      bundle_items: sortedItems,
+      designed_price: designedPrice
+    };
 
-    setGeneratingId(bundle.id);
+    setSelectedBundle(orderPayload);
+    setOrderModalOpen(true);
+    setOrderStep("loading");
 
-    setTimeout(async () => {
-      const node = document.getElementById('ma-donna-poster-final');
-      if (!node) return;
+    try {
+      setTimeout(async () => {
+        const node = document.getElementById("ma-donna-poster-final");
 
-      try {
+        if (!node) {
+          setOrderStep("error");
+          return;
+        }
+
+        // 1. generate image
         const dataUrl = await htmlToImage.toPng(node, {
-          pixelRatio: 2,
+          pixelRatio: 1.5,
           cacheBust: true,
           useCORS: true
         });
 
-        if (isMessengerWebView()) {
-          // Messenger-safe: no blob URL
-          setPreviewUrl(dataUrl);
-        } else {
-          const a = document.createElement('a');
-          a.download = `MaDonna_${bundle.name}.png`;
-          a.href = dataUrl;
-          a.click();
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setGeneratingId(null);
-      }
-    }, 500);
-  };
+        // 2. upload
+        const cloudUrl = await uploadToCloudinary(dataUrl);
 
-  const handleNativeShare = async () => {
-    if (!previewUrl) return;
+        // 3. build message
+        const itemsText = sortedItems
+          .map(i => {
+            const p = pantryMap[i.product_variant_id];
+            return `- ${p?.name || p?.product_name || "Item"} x${i.quantity}`;
+          })
+          .join("\n");
 
-    try {
-      const res = await fetch(previewUrl);
-      const blob = await res.blob();
-      const file = new File([blob], 'MaDonna_Poster.png', { type: 'image/png' });
+        const message = `
+  🍽️ NEW ORDER - Ma'Donna Delicacies
+  
+  📦 Bundle: ${bundle.bundle_name || "Custom Bundle"}
+  👥 Pax: ${paxQuery}
+  
+  🧾 Items:
+  ${itemsText}
+  
+  💰 Total: ₱${designedPrice}
+  
+  📎 Image: ${cloudUrl}
+        `.trim();
 
-      if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: "Ma'Donna Delicacies",
-          text: 'Check out our bundle!'
-        });
-      } else {
-        window.open(previewUrl, '_blank');
-      }
+        setFinalOrderMessage(message);
+        setFinalCloudUrl(cloudUrl);
+        setOrderStep("ready");
+      });
     } catch (err) {
       console.error(err);
+      setOrderStep("error");
     }
   };
 
-  return (
-    <div className="min-h-screen bg-[url('https://images.unsplash.com/photo-1516062423079-7ca13cdc7f5a?q=80&w=2083')] bg-cover bg-fixed p-6 font-sans relative">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
-        <div className="relative z-10 max-w-5xl mx-auto">
+  /* =========================
+     COPY ORDER
+  ========================= */
+  const handleCopyOrder = async () => {
+    if (!finalOrderMessage) return;
 
-        <header className="flex justify-between items-center mb-10">
-          <button onClick={() => navigate('/')} className="text-white">
-            <ChevronLeft /> Back
+    try {
+      await navigator.clipboard.writeText(finalOrderMessage);
+      alert("Order copied!");
+    } catch (err) {
+      // fallback
+      const textarea = document.createElement("textarea");
+      textarea.value = finalOrderMessage;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+
+      alert("Order copied!");
+    }
+  };
+
+  /* =========================
+     OPEN MESSENGER
+  ========================= */
+  const handleOpenMessenger = () => {
+    window.open(
+      "https://m.me/mb.castro.779",
+      "_blank",
+      "noopener,noreferrer"
+    );
+  };
+
+  /* =========================
+     UI
+  ========================= */
+  return (
+    <div className="min-h-screen bg-[url('https://images.unsplash.com/photo-1516062423079-7ca13cdc7f5a?q=80&w=2083')] bg-cover bg-fixed p-6 font-sans">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+
+      <div className="relative z-10 max-w-5xl mx-auto">
+
+        {/* HEADER */}
+        <header className="flex justify-between items-center mb-10 Montserrat">
+          <button
+            onClick={() => navigate('/')}
+            className="flex items-center gap-2 text-white/80 hover:text-white font-bold uppercase text-xs tracking-widest"
+          >
+            <ChevronLeft size={18} /> Change Pax
           </button>
-          <img src={logo} className="w-32" />
+
+          <img src={logo} alt="Ma'Donna" className="w-32 md:w-44 h-auto" />
         </header>
 
+        {/* BUNDLES */}
         {loading ? (
-          <div className="text-white">Loading...</div>
+          <div className="flex justify-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+          </div>
         ) : (
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {bundles.map(bundle => (
               <BundleCard
                 key={bundle.id}
@@ -247,88 +302,104 @@ const BundleList = () => {
                 pantryMap={pantryMap}
                 smartSides={smartSidesMap[bundle.id]}
                 customSelections={customSelections}
-                editingId={editingId}
-                setEditingId={setEditingId}
-                handleToggleItem={handleToggleItem}
-                handleDownloadPoster={handleDownloadPoster}
+                setCustomSelections={setCustomSelections}
+                handleOrderNow={handleOrderNow}
                 generatingId={generatingId}
                 paxQuery={paxQuery}
               />
             ))}
           </div>
         )}
-      </div>
 
-      {/* PREVIEW MODAL */}
-      {previewUrl && (
-        <div className="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center p-4">
-
-          <button
-            onClick={() => setPreviewUrl(null)}
-            className="absolute top-6 right-6 text-white"
-          >
-            <X size={28} />
-          </button>
-
-          <div className="bg-white p-2 rounded-2xl max-w-md w-full">
-            <img src={previewUrl} className="w-full h-auto rounded-xl" />
-          </div>
-
-          <div className="mt-6 flex flex-col gap-3 items-center">
-
-            {isMessengerWebView() ? (
-              <>
-                <button
-                  onClick={handleNativeShare}
-                  className="bg-emerald-600 text-white px-8 py-3 rounded-full"
-                >
-                  Share Poster
-                </button>
-
-                <button
-                  onClick={() => window.open(previewUrl, '_blank')}
-                  className="text-white text-xs underline"
-                >
-                  Open in browser to download
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={handleNativeShare}
-                  className="bg-emerald-600 text-white px-8 py-3 rounded-full"
-                >
-                  Share / Save
-                </button>
-
-                <button
-                  onClick={() => {
-                    const a = document.createElement('a');
-                    a.href = previewUrl;
-                    a.download = 'poster.png';
-                    a.click();
-                  }}
-                  className="text-white text-xs underline"
-                >
-                  Download
-                </button>
-              </>
-            )}
-
-            <p className="text-white/50 text-xs flex items-center gap-1">
-              <Info size={12} /> Use share button for Messenger
-            </p>
-          </div>
+        {/* HIDDEN POSTER */}
+        <div style={{ position: 'absolute', top: '-9999px' }}>
+          {selectedBundle && (
+            <div id="ma-donna-poster-final">
+              <PosterTemplate bundle={selectedBundle} pantryMap={pantryMap} />
+            </div>
+          )}
         </div>
-      )}
 
-      {/* hidden poster */}
-      <div className="absolute -left-[9999px] top-0">
-        {selectedBundle && (
-          <div id="ma-donna-poster-final">
-            <PosterTemplate bundle={selectedBundle} pantryMap={pantryMap} />
+        {/* =========================
+            MODAL UI
+        ========================= */}
+        {orderModalOpen && (
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60">
+
+            <div className="bg-white p-6 rounded-xl w-[90%] max-w-md text-center">
+
+              {/* LOADING STATE */}
+              {orderStep === "loading" && (
+                <>
+                  <h2 className="text-lg font-bold mb-2">
+                    Preparing your order...
+                  </h2>
+
+                  <p className="text-sm text-gray-600">
+                    Please wait while we generate your order and upload image.
+                  </p>
+
+                  <div className="mt-4 animate-spin h-8 w-8 border-b-2 border-emerald-600 mx-auto" />
+                </>
+              )}
+
+              {/* READY STATE */}
+              {orderStep === "ready" && (
+                <>
+                  <h2 className="text-lg font-bold mb-2">
+                    Your order is ready!
+                  </h2>
+
+                  <p className="text-xs text-gray-500 mb-4">
+                    You can now copy or send it to Messenger.
+                  </p>
+
+                  <button
+                    onClick={handleCopyOrder}
+                    className="bg-emerald-600 text-white px-4 py-2 rounded w-full mb-2"
+                  >
+                    Copy Order
+                  </button>
+
+                  <button
+                    onClick={handleOpenMessenger}
+                    className="bg-blue-600 text-white px-4 py-2 rounded w-full"
+                  >
+                    Open Messenger
+                  </button>
+                </>
+              )}
+
+              {/* ERROR STATE */}
+              {orderStep === "error" && (
+                <>
+                  <h2 className="text-red-600 font-bold mb-2">
+                    Something went wrong
+                  </h2>
+
+                  <button
+                    onClick={() => setOrderModalOpen(false)}
+                    className="bg-gray-800 text-white px-4 py-2 rounded"
+                  >
+                    Close
+                  </button>
+                </>
+              )}
+
+              {/* SAFETY FALLBACK (IMPORTANT) */}
+              {!orderStep && (
+                <>
+                  <h2 className="text-lg font-bold mb-2">
+                    Loading...
+                  </h2>
+
+                  <div className="mt-4 animate-spin h-8 w-8 border-b-2 border-emerald-600 mx-auto" />
+                </>
+              )}
+            </div>
           </div>
         )}
+
       </div>
     </div>
   );
