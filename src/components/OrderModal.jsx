@@ -10,8 +10,8 @@ const OrderModal = ({ isOpen, step, onCopy, onOpenMessenger, onClose }) => {
         {/* LOADING STATE */}
         {step === "loading" && (
           <div className="py-4">
-            <h2 className="text-lg font-bold mb-2 Montserrat">Preparing your order...</h2>
-            <p className="text-sm text-gray-600 mb-4">Greetings! We are generating your order and uploading the image.</p>
+            <h2 className="text-lg font-bold mb-2 Montserrat">Recording your order...</h2>
+            <p className="text-sm text-gray-600 mb-4">Almost done — just putting your order together</p>
             <div className="animate-spin h-8 w-8 border-b-2 border-emerald-600 mx-auto" />
           </div>
         )}

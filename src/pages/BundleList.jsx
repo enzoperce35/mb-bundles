@@ -5,7 +5,8 @@ import * as htmlToImage from 'html-to-image';
 
 // Custom Parts
 import { HARDCODED_PANTRY } from '../constants/bundleMenu';
-import { getEditableVariants, calculateSmartQuantity } from '../utils/bundleLogic';
+import { getEditableVariants, calculateSmartQuantity, formatItemName } from '../utils/bundleLogic';
+import { buildOrderMessage } from '../utils/orderMessageFormatter';
 import { getDesignedBundlePrice } from '../utils/discountLogic';
 import { uploadToCloudinary, flattenPantry } from '../services/orderService';
 import PosterTemplate from '../components/PosterTemplate';
@@ -103,7 +104,7 @@ const BundleList = () => {
 
     const currentItems = customSelections[bundle.id] || bundle.bundle_items || [];
     const isAlreadySelected = currentItems.some(i => i.product_variant_id === variantId);
-    
+
     // Define the Minimum Floor
     const minRequired = bundle.max_pax <= 5 ? 3 : 2;
 
@@ -114,24 +115,24 @@ const BundleList = () => {
     }
 
     // If adding (isAlreadySelected is false), there is no upper limit based on your request.
-    
+
     setIsUpdating(true);
     setCustomSelections(prev => {
       const items = prev[bundle.id] || bundle.bundle_items || [];
       const exists = items.find(i => i.product_variant_id === variantId);
-      
-      const newItems = exists 
-        ? items.filter(i => i.product_variant_id !== variantId) 
-        : [...items, { 
-            product_variant_id: variantId, 
-            quantity: calculateSmartQuantity(pantryMap[variantId]?.pax, bundle.max_pax), 
-            price: pantryMap[variantId]?.price || 0 
-          }];
+
+      const newItems = exists
+        ? items.filter(i => i.product_variant_id !== variantId)
+        : [...items, {
+          product_variant_id: variantId,
+          quantity: calculateSmartQuantity(pantryMap[variantId]?.pax, bundle.max_pax),
+          price: pantryMap[variantId]?.price || 0
+        }];
 
       localStorage.setItem('servewise_bundle_customizations', JSON.stringify({ ...prev, [bundle.id]: newItems }));
       return { ...prev, [bundle.id]: newItems };
     });
-    
+
     setTimeout(() => setIsUpdating(false), 16);
   };
 
@@ -148,13 +149,13 @@ const BundleList = () => {
 
     try {
       const { toPng } = await import('html-to-image');
-      
+
       setTimeout(async () => {
         const node = document.getElementById("ma-donna-poster-final");
         const dataUrl = await htmlToImage.toPng(node, { pixelRatio: 0.5, cacheBust: true, useCORS: true });
         const cloudUrl = await uploadToCloudinary(dataUrl);
-        const itemsText = sorted.map(i => `- ${pantryMap[i.product_variant_id]?.product_name || "Item"} x${i.quantity}`).join("\n");
-        setFinalOrderMessage(`Greetings! 🍽️ NEW ORDER\n\n📦 Bundle: ${bundle.bundle_name}\n👥 Pax: ${paxQuery}\n\n🧾 Items:\n${itemsText}\n\n💰 Total: ₱${price}\n\n📎 Image: ${cloudUrl}`);
+        const message = buildOrderMessage({ bundle, sortedItems: sorted, pantryMap, pax: paxQuery, price, cloudUrl, formatItemName });
+        setFinalOrderMessage(message);
         setOrderStep("ready");
       }, 500);
     } catch { setOrderStep("error"); }
