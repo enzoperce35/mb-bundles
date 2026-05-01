@@ -70,7 +70,7 @@ export const HARDCODED_PANTRY = [
     rails_parent_id: 15,
     public_id: 'dnox9od3tjhz0swrut7j',
     variants: [
-      { name: "Puto", mb_name: "Puto Small 15pcs", rails_variant_id: 42, price: 135, pax: 6, count: 15 },
+      { name: "Puto", mb_name: "Puto Small 15pcs", rails_variant_id: 41, price: 135, pax: 6, count: 15 },
     ]
   },
   {
