@@ -60,7 +60,7 @@ const PaxSelector = () => {
 
           <div className="relative inline-block">
             <p className="text-emerald-50 text-xl md:text-2xl font-bold italic tracking-tight opacity-90">
-              Choose your bundles
+              Create your bundle
             </p>
           </div>
         </header>
