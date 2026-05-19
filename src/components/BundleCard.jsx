@@ -13,7 +13,9 @@ const BundleCard = ({
     handleToggleItem,
     resetBundle,
     handleOrderNow,
-    paxQuery
+    paxQuery,
+    isOnboardingTarget,
+    dismissOnboarding
 }) => {
     const isEditing = editingId === bundle.id;
     const activeItems = customSelections[bundle.id] || bundle.bundle_items || [];
@@ -92,25 +94,50 @@ const BundleCard = ({
     }, [activeItems, pantryMap, paxQuery]);
 
     return (
-        <div className="group relative bg-orange-50/95 rounded-3xl overflow-hidden shadow-2xl flex flex-col border-b-8 border-emerald-900 transition-all hover:shadow-emerald-900/20">
+        <div className="group relative bg-orange-50/95 rounded-3xl overflow-visible shadow-2xl flex flex-col border-b-8 border-emerald-900 transition-all hover:shadow-emerald-900/20">
 
             {/* HEADER */}
             <div className="p-8 pb-0">
                 <div className="flex justify-between items-start mb-4 Montserrat">
-                    {/* EDIT BUTTON */}
-                    <button
-                        onClick={() => setEditingId(isEditing ? null : bundle.id)}
-                        className={`flex items-center gap-2 text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest transition-all 
-            ${isEditing
-                                ? 'bg-orange-600 text-white animate-pulse'
-                                : 'bg-emerald-800 text-white hover:bg-emerald-700'
-                            }`}
-                    >
-                        {isEditing ? <Save size={12} /> : <Edit3 size={12} />}
-                        {isEditing ? 'Done Selecting' : 'Select Inclusions'}
-                    </button>
+                    
+                    {/* BUTTON WRAPPER MARKER */}
+                    <div className="relative inline-block">
+                        
+                        {/* PURE CSS PINNED JUMPING TOOLTIP */}
+                        {isOnboardingTarget && (
+                            <div 
+                                onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    dismissOnboarding(); 
+                                }}
+                                /* FIXED: Adjusted bottom positioning value from bottom-full to -bottom-1 to shift the indicator downwards */
+                                className="absolute -bottom-1 left-1/2 -translate-x-1/2 pb-7 flex flex-col items-center animate-bounce cursor-pointer"
+                                style={{ transform: 'translate(-50%, -100%)' }}
+                            >
+                                <div className="bg-orange-500 text-stone-900 font-black text-[10px] px-3 py-1.5 rounded-xl uppercase tracking-wider whitespace-nowrap shadow-xl shadow-orange-500/30 Montserrat">
+                                   Click this to customize items!
+                                </div>
+                                <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px] border-t-orange-500 -mt-[1px]" />
+                            </div>
+                        )}
 
-                    {/* PAX COUNT (Moved here) */}
+                        <button
+                            onClick={(e) => {
+                                if (isOnboardingTarget) dismissOnboarding();
+                                setEditingId(isEditing ? null : bundle.id);
+                            }}
+                            className={`flex items-center gap-2 text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest transition-all 
+                                ${isEditing
+                                    ? 'bg-orange-600 text-white animate-pulse'
+                                    : 'bg-emerald-800 text-white hover:bg-emerald-700'
+                                }`}
+                        >
+                            {isEditing ? <Save size={12} /> : <Edit3 size={12} />}
+                            {isEditing ? 'Done Selecting' : 'Select Inclusions'}
+                        </button>
+                    </div>
+
+                    {/* PAX COUNT */}
                     <div className="flex items-center gap-1.5 px-5 py-1.5 bg-stone-200/50 rounded-full text-stone-600 font-black text-[12px] uppercase tracking-tighter">
                         <Users size={18} />
                         {bundle.max_pax} Pax
@@ -122,7 +149,6 @@ const BundleCard = ({
                 </h2>
 
                 <div className="flex items-center gap-4 Montserrat">
-                    {/* Lead time remains here for balance */}
                     <p className="text-orange-700 font-bold text-xs uppercase flex items-center gap-1.5">
                         <Clock size={14} /> {bundle.lead_time_days || 2} Days
                     </p>
@@ -169,13 +195,13 @@ const BundleCard = ({
                                     key={variantId}
                                     onClick={() => isEditing && !isMain && handleToggleItem(bundle, variantId)}
                                     className={`text-sm font-bold flex items-center gap-3 transition-all 
-                    ${isEditing && !isMain ? 'cursor-pointer p-2 rounded-lg hover:bg-emerald-50/50' : ''} 
-                    ${isMain ? 'opacity-100 cursor-not-allowed' : ''}
-                    ${isSelected ? 'text-stone-700' : 'text-stone-400'}
-                  `}
+                                        ${isEditing && !isMain ? 'cursor-pointer p-2 rounded-lg hover:bg-emerald-50/50' : ''} 
+                                        ${isMain ? 'opacity-100 cursor-not-allowed' : ''}
+                                        ${isSelected ? 'text-stone-700' : 'text-stone-400'}
+                                    `}
                                 >
                                     <div className={`w-5 h-5 rounded flex items-center justify-center border-2 
-                    ${isMain
+                                        ${isMain
                                             ? 'bg-emerald-300 border-emerald-300'
                                             : isSelected
                                                 ? 'bg-emerald-600 border-emerald-600'

@@ -8,7 +8,7 @@ import { HARDCODED_PANTRY } from '../constants/bundleMenu';
 import { getEditableVariants, calculateSmartQuantity, formatItemName } from '../utils/bundleLogic';
 import { buildOrderMessage } from '../utils/orderMessageFormatter';
 import { getDesignedBundlePrice } from '../utils/discountLogic';
-import { uploadToCloudinary, flattenPantry } from '../services/orderService';
+import { uploadToCloudinary } from '../services/orderService';
 import PosterTemplate from '../components/PosterTemplate';
 import BundleCard from '../components/BundleCard';
 import OrderModal from '../components/OrderModal';
@@ -52,18 +52,16 @@ const BundleList = () => {
   const [customSelections, setCustomSelections] = useState({});
   const [isUpdating, setIsUpdating] = useState(false);
 
+  // Walkthrough Visibility State
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
   // Modal State
   const [orderModalOpen, setOrderModalOpen] = useState(false);
   const [orderStep, setOrderStep] = useState("idle");
   const [finalOrderMessage, setFinalOrderMessage] = useState("");
 
-  const [isDataReady, setIsDataReady] = useState(false);
-
-  // Inside BundleList.jsx
-  const [isCalculating, setIsCalculating] = useState(true);
-
   const pantryMap = useMemo(() => {
-    if (loading) return {}; // Don't calculate while the API is still fetching
+    if (loading) return {};
 
     const map = {};
     CONSTANT_FLAT_PANTRY.forEach(item => {
@@ -77,7 +75,7 @@ const BundleList = () => {
     });
 
     return map;
-  }, [loading, allProducts]); // Only runs ONCE after loading finishes
+  }, [loading, allProducts]);
 
   const smartSidesMap = useMemo(() => {
     const map = {};
@@ -85,19 +83,49 @@ const BundleList = () => {
     return map;
   }, [bundles]);
 
+  // ✅ ALWAYS START FROM THE TOP CARD ON PAX OPENING / TRANSITIONS
   useEffect(() => {
+    // 1. Immediately push scroll positions to the top
+    window.scrollTo({ top: 0, behavior: 'instant' });
+    
+    // 2. Clear any lingering active selections from previous setups
+    setEditingId(null);
+    setCustomSelections({});
+    
     const fetchData = async () => {
+      setLoading(true);
       try {
-        const [bRes, pRes] = await Promise.all([
-          fetch(`https://servewise-market-backend.onrender.com/api/v1/bundles?pax=${paxQuery}`),
-          fetch(`https://servewise-market-backend.onrender.com/api/v1/products`)
-        ]);
-        setBundles(await bRes.json());
-        setAllProducts(await pRes.json());
-      } catch (err) { console.error(err); } finally { setLoading(false); }
+        const bRes = await fetch(`https://servewise-market-backend.onrender.com/api/v1/bundles?pax=${paxQuery}`);
+        const bundlesData = await bRes.json();
+
+        const pRes = await fetch(`https://servewise-market-backend.onrender.com/api/v1/products`);
+        const productsData = await pRes.json();
+
+        setBundles(bundlesData);
+        setAllProducts(productsData);
+        
+        if (Array.isArray(bundlesData) && bundlesData.length > 0) {
+          checkOnboardingWindow();
+        }
+      } catch (err) { 
+        console.error("Fetch Data Interrupted:", err); 
+      } finally { 
+        setLoading(false); 
+      }
     };
     fetchData();
   }, [paxQuery]);
+
+  const checkOnboardingWindow = () => {
+    const lastShown = localStorage.getItem('onboarding_last_shown');
+    const now = Date.now();
+    const tenDaysInMs = 10 * 24 * 60 * 60 * 1000;
+
+    if (!lastShown || (now - parseInt(lastShown, 10)) > tenDaysInMs) {
+      setShowOnboarding(true);
+      localStorage.setItem('onboarding_last_shown', now.toString());
+    }
+  };
 
   const handleToggleItem = (bundle, variantId) => {
     if (isUpdating || pantryMap[variantId]?.main) return;
@@ -129,7 +157,6 @@ const BundleList = () => {
         newItems = [...items, newItem];
       }
   
-      // Removed localStorage.setItem call
       return { ...prev, [bundle.id]: newItems };
     });
     
@@ -141,7 +168,6 @@ const BundleList = () => {
     const sorted = [...activeItems].sort((a, b) => (pantryMap[b.product_variant_id]?.main ? 1 : 0) - (pantryMap[a.product_variant_id]?.main ? 1 : 0));
     const total = sorted.reduce((acc, i) => acc + ((pantryMap[i.product_variant_id]?.price || 0) * (i.quantity || 1)), 0);
     const price = getDesignedBundlePrice(total, paxQuery);
-    const htmlToImage = await import('html-to-image');
 
     setSelectedBundle({ ...bundle, bundle_items: sorted, designed_price: price });
     setOrderModalOpen(true);
@@ -152,7 +178,7 @@ const BundleList = () => {
 
       setTimeout(async () => {
         const node = document.getElementById("ma-donna-poster-final");
-        const dataUrl = await htmlToImage.toPng(node, { pixelRatio: 0.5, cacheBust: true, useCORS: true });
+        const dataUrl = await toPng(node, { pixelRatio: 0.5, cacheBust: true, useCORS: true });
         const cloudUrl = await uploadToCloudinary(dataUrl);
         const message = buildOrderMessage({ bundle, sortedItems: sorted, pantryMap, pax: paxQuery, price, cloudUrl, formatItemName });
         setFinalOrderMessage(message);
@@ -164,6 +190,7 @@ const BundleList = () => {
   return (
     <div className="min-h-screen bg-[url('https://images.unsplash.com/photo-1516062423079-7ca13cdc7f5a?auto=format&fit=crop&w=1200&q=60')] bg-cover bg-fixed p-6 font-sans contain: 'paint'">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
+
       <div className="relative z-10 max-w-5xl mx-auto">
         <header className="flex justify-between items-center mb-10">
           <button onClick={() => navigate('/')} className="text-white/80 font-bold uppercase text-xs tracking-widest flex items-center gap-2"><ChevronLeft size={18} /> Change Pax</button>
@@ -172,7 +199,6 @@ const BundleList = () => {
 
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in duration-500">
-            {/* Show 4 skeletons while loading */}
             {[1, 2, 3, 4].map(i => <BundleSkeleton key={i} />)}
           </div>
         ) : (
@@ -181,13 +207,12 @@ const BundleList = () => {
               <div
                 key={b.id}
                 style={{
-                  animationDelay: `${index * 100}ms`, // Staggers the load
+                  animationDelay: `${index * 100}ms`,
                   animationFillMode: 'both'
                 }}
-                className="animate-in fade-in slide-in-from-bottom-4"
+                className="animate-in fade-in slide-in-from-bottom-4 transition-all duration-300"
               >
                 <BundleCard
-                  key={b.id}
                   bundle={b}
                   pantryMap={pantryMap}
                   smartSides={smartSidesMap[b.id]}
@@ -204,7 +229,10 @@ const BundleList = () => {
                     setEditingId(null);
                   }}
                   handleOrderNow={handleOrderNow}
-                  paxQuery={paxQuery} />
+                  paxQuery={paxQuery}
+                  isOnboardingTarget={index === 0 && showOnboarding}
+                  dismissOnboarding={() => setShowOnboarding(false)}
+                />
               </div>
             ))}
           </div>
