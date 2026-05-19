@@ -87,11 +87,11 @@ const BundleList = () => {
   useEffect(() => {
     // 1. Immediately push scroll positions to the top
     window.scrollTo({ top: 0, behavior: 'instant' });
-    
+
     // 2. Clear any lingering active selections from previous setups
     setEditingId(null);
     setCustomSelections({});
-    
+
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -103,14 +103,14 @@ const BundleList = () => {
 
         setBundles(bundlesData);
         setAllProducts(productsData);
-        
+
         if (Array.isArray(bundlesData) && bundlesData.length > 0) {
           checkOnboardingWindow();
         }
-      } catch (err) { 
-        console.error("Fetch Data Interrupted:", err); 
-      } finally { 
-        setLoading(false); 
+      } catch (err) {
+        console.error("Fetch Data Interrupted:", err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
@@ -119,9 +119,9 @@ const BundleList = () => {
   const checkOnboardingWindow = () => {
     const lastShown = localStorage.getItem('onboarding_last_shown');
     const now = Date.now();
-    const tenDaysInMs = 10 * 24 * 60 * 60 * 1000;
+    const threeMinutesInMs = 3 * 60 * 1000;
 
-    if (!lastShown || (now - parseInt(lastShown, 10)) > tenDaysInMs) {
+    if (!lastShown || (now - parseInt(lastShown, 10)) > threeMinutesInMs) {
       setShowOnboarding(true);
       localStorage.setItem('onboarding_last_shown', now.toString());
     }
@@ -129,37 +129,37 @@ const BundleList = () => {
 
   const handleToggleItem = (bundle, variantId) => {
     if (isUpdating || pantryMap[variantId]?.main) return;
-  
+
     const currentItems = customSelections[bundle.id] || bundle.bundle_items || [];
     const isAlreadySelected = currentItems.some(i => i.product_variant_id === variantId);
-    
+
     const minRequired = bundle.max_pax <= 5 ? 3 : 2;
-  
+
     if (isAlreadySelected && currentItems.length <= minRequired) {
       alert(`To maintain bundle quality, you must have at least ${minRequired} items selected.`);
       return;
     }
-  
+
     setIsUpdating(true);
     setCustomSelections(prev => {
       const items = prev[bundle.id] || bundle.bundle_items || [];
       const exists = items.find(i => i.product_variant_id === variantId);
-      
+
       let newItems;
       if (exists) {
         newItems = items.filter(i => i.product_variant_id !== variantId);
       } else {
-        const newItem = { 
-          product_variant_id: variantId, 
-          quantity: calculateSmartQuantity(pantryMap[variantId]?.pax, bundle.max_pax), 
-          price: pantryMap[variantId]?.price || 0 
+        const newItem = {
+          product_variant_id: variantId,
+          quantity: calculateSmartQuantity(pantryMap[variantId]?.pax, bundle.max_pax),
+          price: pantryMap[variantId]?.price || 0
         };
         newItems = [...items, newItem];
       }
-  
+
       return { ...prev, [bundle.id]: newItems };
     });
-    
+
     setTimeout(() => setIsUpdating(false), 16);
   };
 
@@ -223,7 +223,7 @@ const BundleList = () => {
                   resetBundle={() => {
                     setCustomSelections(prev => {
                       const newState = { ...prev };
-                      delete newState[b.id]; 
+                      delete newState[b.id];
                       return newState;
                     });
                     setEditingId(null);
