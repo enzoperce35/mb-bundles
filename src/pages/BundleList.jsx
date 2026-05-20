@@ -18,8 +18,10 @@ const CONSTANT_FLAT_PANTRY = HARDCODED_PANTRY.flatMap(product =>
   (product.variants || []).map(variant => ({
     ...variant,
     product_name: product.product_name,
-    rails_parent_id: product.rails_parent_id,
-    public_id: product.public_id
+    public_id: product.public_id,
+
+    // use product name as grouping key
+    group_key: product.product_name
   }))
 );
 
@@ -62,24 +64,48 @@ const BundleList = () => {
 
   const pantryMap = useMemo(() => {
     if (loading) return {};
-
+  
     const map = {};
+  
     CONSTANT_FLAT_PANTRY.forEach(item => {
-      map[item.rails_variant_id] = { ...item, price: parseFloat(item.price || 0) };
+      map[item.rails_variant_id] = {
+        ...item,
+        price: 0
+      };
     });
-
+  
     allProducts.forEach(product => {
-      product.product_variants?.forEach(v => {
-        if (map[v.id]) map[v.id].price = parseFloat(v.price || 0);
+      product.variants?.forEach(v => {
+        if (map[v.id]) {
+          map[v.id].price = parseFloat(v.price || 0);
+        }
       });
     });
-
+  
     return map;
   }, [loading, allProducts]);
 
   const smartSidesMap = useMemo(() => {
     const map = {};
-    bundles.forEach(b => { map[b.id] = getEditableVariants(HARDCODED_PANTRY, b.max_pax); });
+  
+    bundles.forEach(bundle => {
+      const variants = getEditableVariants(
+        HARDCODED_PANTRY,
+        bundle.max_pax
+      );
+  
+      map[bundle.id] = variants.map(v => ({
+        ...v,
+  
+        group_key:
+          HARDCODED_PANTRY.find(p =>
+            p.variants?.some(
+              x => x.rails_variant_id === v.rails_variant_id
+            )
+          )?.product_name
+      }));
+    });
+  
     return map;
   }, [bundles]);
 
@@ -98,7 +124,7 @@ const BundleList = () => {
         const bRes = await fetch(`https://servewise-market-backend.onrender.com/api/v1/bundles?pax=${paxQuery}`);
         const bundlesData = await bRes.json();
 
-        const pRes = await fetch(`https://servewise-market-backend.onrender.com/api/v1/products`);
+        const pRes = await fetch(`https://servewise-market-backend.onrender.com/api/v1/products/master_list?shop_id=1`);
         const productsData = await pRes.json();
 
         setBundles(bundlesData);
@@ -151,8 +177,10 @@ const BundleList = () => {
       } else {
         const newItem = {
           product_variant_id: variantId,
-          quantity: calculateSmartQuantity(pantryMap[variantId]?.pax, bundle.max_pax),
-          price: pantryMap[variantId]?.price || 0
+          quantity: calculateSmartQuantity(
+            pantryMap[variantId]?.pax,
+            bundle.max_pax
+          )
         };
         newItems = [...items, newItem];
       }

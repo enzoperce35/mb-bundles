@@ -31,44 +31,61 @@ const BundleBuilder = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loadingPrices, setLoadingPrices] = useState(true);
 
-  // 1. INITIALIZE PRICE MAP FROM HARDCODED_PANTRY IMMEDIATELY
   useEffect(() => {
     const initialMapping = {};
+  
     flatPantry.forEach(item => {
       if (item.rails_variant_id) {
-        initialMapping[item.rails_variant_id.toString()] = Number(item.price || 0);
+        initialMapping[item.rails_variant_id.toString()] =
+          Number(item.price || 0);
       }
     });
+  
     setPriceMap(initialMapping);
-
-    // 2. THEN FETCH LIVE PRICES TO OVERWRITE IF NECESSARY
+  
     const fetchPrices = async () => {
       try {
-        const response = await fetch('https://servewise-market-backend.onrender.com/api/v1/products?shop_id=1&admin_mode=true');
+        const response = await fetch(
+          'https://servewise-market-backend.onrender.com/api/v1/products?shop_id=1&admin_mode=true'
+        );
+  
         const data = await response.json();
-        const liveMapping = { ...initialMapping }; // Keep hardcoded as base
-
-        const allProducts = Array.isArray(data[0]?.products)
+  
+        // Start from hardcoded fallback
+        const liveMapping = { ...initialMapping };
+  
+        const allProducts = Array.isArray(data?.[0]?.products)
           ? data.flatMap(g => g.products)
           : data;
-
+  
         allProducts.forEach(product => {
-          const variants = product.product_variants || product.variants || [];
+          const variants =
+            product.product_variants ||
+            product.variants ||
+            [];
+  
           variants.forEach(v => {
             if (v.id) {
-              liveMapping[v.id.toString()] = Number(v.price);
+              liveMapping[v.id.toString()] =
+                Number(v.price || 0);
             }
           });
         });
-
+  
         setPriceMap(liveMapping);
-        setLoadingPrices(false);
+  
       } catch (err) {
-        console.error("❌ FETCH ERROR (Using hardcoded as fallback):", err);
+        console.error(
+          "❌ FETCH ERROR (Using hardcoded fallback):",
+          err
+        );
+      } finally {
         setLoadingPrices(false);
       }
     };
+  
     fetchPrices();
+  
   }, [flatPantry]);
 
   const getItemPrice = (variantId) => {
@@ -127,30 +144,36 @@ const BundleBuilder = () => {
   };
 
   const filteredPantry = flatPantry.filter(item =>
-    item.mb_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.product_name.toLowerCase().includes(searchTerm.toLowerCase())
+    (item.mb_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.product_name || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleSaveBundle = async () => {
-    if (!bundle.name || !bundle.price || bundle.items.length === 0) {
-      alert("Oops! Please provide a name, price, and at least one item.");
+    if (!bundle.name || bundle.items.length === 0) {
+      alert("Oops! Please provide a name and at least one item.");
       return;
     }
-
+  
+    const calculatedPrice = bundle.items.reduce(
+      (acc, item) =>
+        acc + calculateItemTotal(item).totalPrice,
+      0
+    );
+  
     const payload = {
       bundle: {
         name: bundle.name,
-        price: parseFloat(bundle.price),
+        price: calculatedPrice,
         min_pax: bundle.min_pax,
         max_pax: bundle.max_pax,
         lead_time_days: bundle.lead_time_days,
         shop_id: 1,
         active: true,
+  
         bundle_items_attributes: bundle.items.map(item => ({
           product_variant_id: item.rails_variant_id,
           quantity: item.quantity,
-          // Sending price ensures the snapshot is captured correctly
           price: getItemPrice(item.rails_variant_id)
         }))
       }

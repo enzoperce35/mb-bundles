@@ -14,7 +14,7 @@ const flattenPantry = (pantry) => {
 };
 
 const EditBundle = () => {
-  const { id } = useParams(); 
+  const { id } = useParams();
   const navigate = useNavigate();
   const flatPantry = useMemo(() => flattenPantry(HARDCODED_PANTRY), []);
 
@@ -24,7 +24,7 @@ const EditBundle = () => {
     min_pax: 10,
     max_pax: 20,
     lead_time_days: 2,
-    shop_id: 1, 
+    shop_id: 1,
     items: []
   });
 
@@ -41,25 +41,43 @@ const EditBundle = () => {
 
         const pResponse = await fetch('https://servewise-market-backend.onrender.com/api/v1/products?shop_id=1&admin_mode=true');
         const pData = await pResponse.json();
-        
+
         const liveMapping = {};
         const allProducts = Array.isArray(pData[0]?.products) ? pData.flatMap(g => g.products) : pData;
         allProducts.forEach(product => {
-          (product.product_variants || product.variants || []).forEach(v => {
-            if (v.id) liveMapping[v.id.toString()] = Number(v.price);
-          });
+          (product.product_variants || product.variants || [])
+            .forEach(v => {
+              if (v.id) {
+                liveMapping[v.id.toString()] =
+                  Number(v.price || 0);
+              }
+            });
         });
         setPriceMap(liveMapping);
 
-        const mappedItems = bData.bundle_items.map(bi => {
-          const pantryMatch = flatPantry.find(p => p.rails_variant_id === bi.product_variant_id);
+        const mappedItems = (bData.bundle_items || []).map(bi => {
+          const pantryMatch = flatPantry.find(
+            item =>
+              item.rails_variant_id?.toString() ===
+              bi.product_variant_id?.toString()
+          );
+
           return {
             id: bi.id,
             rails_variant_id: bi.product_variant_id,
             quantity: bi.quantity,
-            name: pantryMatch?.name || bi.variant_name || "Unknown Item",
-            mb_name: pantryMatch?.mb_name || bi.variant_name || "Unknown Item",
-            pax: pantryMatch?.pax || bi.pax || 0
+            name:
+              pantryMatch?.name ||
+              bi.variant_name ||
+              "Unknown Item",
+            mb_name:
+              pantryMatch?.mb_name ||
+              bi.variant_name ||
+              "Unknown Item",
+            pax:
+              pantryMatch?.pax ||
+              bi.pax ||
+              0
           };
         });
 
@@ -80,7 +98,10 @@ const EditBundle = () => {
     fetchBundleAndPrices();
   }, [id, flatPantry]);
 
-  const getItemPrice = (variantId) => priceMap[variantId?.toString()] || 0;
+  const getItemPrice = (variantId) => {
+    if (!variantId) return 0;
+    return priceMap[variantId.toString().trim()] || 0;
+  };
 
   const bundleTotals = useMemo(() => {
     return bundle.items.reduce((acc, item) => {
@@ -111,9 +132,9 @@ const EditBundle = () => {
     if (itemToRemove?.id) {
       setDeletedIds(prev => [...prev, itemToRemove.id]);
     }
-    setBundle(prev => ({ 
-      ...prev, 
-      items: prev.items.filter(item => item.rails_variant_id !== rails_variant_id) 
+    setBundle(prev => ({
+      ...prev,
+      items: prev.items.filter(item => item.rails_variant_id !== rails_variant_id)
     }));
   };
 
@@ -156,7 +177,13 @@ const EditBundle = () => {
         max_pax: bundle.max_pax,
         lead_time_days: bundle.lead_time_days,
         bundle_items_attributes: [
-          ...bundle.items.map(item => ({ id: item.id || null, product_variant_id: item.rails_variant_id, quantity: item.quantity, _destroy: false })),
+          ...bundle.items.map(item => ({
+            id: item.id || null,
+            product_variant_id: item.rails_variant_id,
+            quantity: item.quantity,
+            price: getItemPrice(item.rails_variant_id),
+            _destroy: false
+          })),
           ...deletedIds.map(dbId => ({ id: dbId, _destroy: true }))
         ]
       }
@@ -177,9 +204,10 @@ const EditBundle = () => {
     }
   };
 
-  const filteredPantry = flatPantry.filter(item => 
-    item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.mb_name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredPantry = flatPantry.filter(item =>
+    (item.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.mb_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.product_name || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) return <div className="min-h-screen bg-stone-950 flex items-center justify-center text-white font-black">SYNCING DATA...</div>;
@@ -213,35 +241,35 @@ const EditBundle = () => {
                   <input type="text" className="bg-white border-2 border-stone-200 rounded-2xl px-5 py-4 focus:border-orange-600 outline-none font-bold" value={bundle.name} onChange={(e) => setBundle({ ...bundle, name: e.target.value })} />
                 </div>
                 <div className="sticky top-4 z-20 bg-gradient-to-br from-orange-600 to-orange-800 text-white rounded-2xl px-6 py-5 shadow-xl flex items-center justify-between">
-  <div>
-    <p className="text-[9px] font-black uppercase tracking-widest opacity-80">
-      Running Total
-    </p>
-    <p className="text-2xl font-black tracking-tight">
-      ₱{bundleTotals.price.toLocaleString()}
-    </p>
-  </div>
-</div>
+                  <div>
+                    <p className="text-[9px] font-black uppercase tracking-widest opacity-80">
+                      Running Total
+                    </p>
+                    <p className="text-2xl font-black tracking-tight">
+                      ₱{bundleTotals.price.toLocaleString()}
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {/* Editable Pax & Lead Time */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="bg-orange-900/5 p-4 rounded-2xl border border-orange-900/10">
-                  <label className="text-[10px] font-black text-orange-900 uppercase Montserrat tracking-widest mb-2 flex items-center gap-2"><Users size={14}/> Min Pax</label>
-                  <select className="w-full bg-transparent font-black text-lg Montserrat outline-none" value={bundle.min_pax} onChange={(e) => setBundle({...bundle, min_pax: parseInt(e.target.value)})}>
-                    {[5,10,15,20,25,30,40,50].map(p => <option key={p} value={p}>{p} Pax</option>)}
+                  <label className="text-[10px] font-black text-orange-900 uppercase Montserrat tracking-widest mb-2 flex items-center gap-2"><Users size={14} /> Min Pax</label>
+                  <select className="w-full bg-transparent font-black text-lg Montserrat outline-none" value={bundle.min_pax} onChange={(e) => setBundle({ ...bundle, min_pax: parseInt(e.target.value) })}>
+                    {[5, 10, 15, 20, 25, 30, 40, 50].map(p => <option key={p} value={p}>{p} Pax</option>)}
                   </select>
                 </div>
                 <div className="bg-orange-900/5 p-4 rounded-2xl border border-orange-900/10">
-                  <label className="text-[10px] font-black text-orange-900 uppercase Montserrat tracking-widest mb-2 flex items-center gap-2"><Users size={14}/> Max Pax</label>
-                  <select className="w-full bg-transparent font-black text-lg Montserrat outline-none" value={bundle.max_pax} onChange={(e) => setBundle({...bundle, max_pax: parseInt(e.target.value)})}>
-                    {[5,10,15,20,25,30,40,50].map(p => <option key={p} value={p}>{p} Pax</option>)}
+                  <label className="text-[10px] font-black text-orange-900 uppercase Montserrat tracking-widest mb-2 flex items-center gap-2"><Users size={14} /> Max Pax</label>
+                  <select className="w-full bg-transparent font-black text-lg Montserrat outline-none" value={bundle.max_pax} onChange={(e) => setBundle({ ...bundle, max_pax: parseInt(e.target.value) })}>
+                    {[5, 10, 15, 20, 25, 30, 40, 50].map(p => <option key={p} value={p}>{p} Pax</option>)}
                   </select>
                 </div>
                 <div className="bg-stone-900/5 p-4 rounded-2xl border border-stone-900/10">
-                  <label className="text-[10px] font-black text-stone-900 uppercase Montserrat tracking-widest mb-2 flex items-center gap-2"><Clock size={14}/> Lead Time</label>
+                  <label className="text-[10px] font-black text-stone-900 uppercase Montserrat tracking-widest mb-2 flex items-center gap-2"><Clock size={14} /> Lead Time</label>
                   <div className="flex items-center gap-2">
-                    <input type="number" className="w-full bg-transparent font-black text-lg Montserrat outline-none" value={bundle.lead_time_days} onChange={(e) => setBundle({...bundle, lead_time_days: parseInt(e.target.value)})}/>
+                    <input type="number" className="w-full bg-transparent font-black text-lg Montserrat outline-none" value={bundle.lead_time_days} onChange={(e) => setBundle({ ...bundle, lead_time_days: parseInt(e.target.value) })} />
                     <span className="text-[10px] font-black text-stone-400 uppercase Montserrat">Days</span>
                   </div>
                 </div>
@@ -252,7 +280,7 @@ const EditBundle = () => {
                 <div className="flex justify-between items-end mb-4 px-2">
                   <h3 className="text-[10px] font-black text-stone-400 uppercase tracking-widest Montserrat">Current Items</h3>
                 </div>
-                
+
                 <div className="bg-white/50 border-2 border-dashed border-stone-200 rounded-[2rem] p-4 min-h-[350px]">
                   {bundle.items.map((item) => {
                     const itemTotalPrice = getItemPrice(item.rails_variant_id) * item.quantity;
@@ -267,7 +295,7 @@ const EditBundle = () => {
                             ₱{getItemPrice(item.rails_variant_id)} x {item.quantity} = ₱{itemTotalPrice.toLocaleString()}
                           </p>
                         </div>
-                        
+
                         <div className="flex items-center gap-4">
                           <div className="flex items-center bg-stone-100 rounded-xl p-1 px-3 gap-3">
                             <button onClick={() => updateItemQuantity(item.rails_variant_id, item.quantity - 1)} className="text-stone-400 hover:text-orange-600 font-bold">-</button>
@@ -293,14 +321,17 @@ const EditBundle = () => {
           {/* Pantry Side Panel */}
           <div className="w-full lg:w-2/5 bg-stone-900/90 backdrop-blur-xl rounded-[2.5rem] p-8 h-[850px] flex flex-col border border-stone-800/50 shadow-2xl">
             <div className="mb-6 relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-500" size={18} />
-                <input type="text" placeholder="Filter Ingredients..." className="w-full bg-stone-800 border border-stone-700 rounded-2xl py-4 pl-12 text-white font-bold text-sm outline-none focus:border-orange-500 transition-all shadow-inner" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-stone-500" size={18} />
+              <input type="text" placeholder="Filter Ingredients..." className="w-full bg-stone-800 border border-stone-700 rounded-2xl py-4 pl-12 text-white font-bold text-sm outline-none focus:border-orange-500 transition-all shadow-inner" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
             <div className="flex-grow overflow-y-auto space-y-2 pr-2 custom-scrollbar">
               {filteredPantry.map((item) => (
                 <button key={item.rails_variant_id} onClick={() => addItemToBundle(item)} className="w-full group flex items-center justify-between p-4 rounded-2xl bg-stone-800/40 hover:bg-orange-600/10 border border-stone-700/30 hover:border-orange-500/50 transition-all text-left">
                   <div>
-                    <p className="text-stone-100 font-bold Montserrat text-[13px] uppercase group-hover:text-orange-400 transition-colors">{item.name}</p>
+                    <p className="text-stone-100 font-bold Montserrat text-[13px] uppercase group-hover:text-orange-400 transition-colors">
+                      {item.name}
+                      {item.count ? ` ${item.count} pcs` : ''}
+                    </p>
                     <div className="flex gap-2 mt-1">
                       {item.pax > 0 && (
                         <span className="text-[9px] font-black bg-stone-700 text-stone-300 px-2 py-0.5 rounded uppercase Montserrat tracking-tighter">

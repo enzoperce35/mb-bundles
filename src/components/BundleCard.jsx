@@ -42,12 +42,15 @@ const BundleCard = ({
         activeItems.forEach(item => {
             const p = pantryMap[item.product_variant_id];
             if (!p) return;
-            resultMap[p.rails_parent_id] = item.product_variant_id;
+        
+            resultMap[p.group_key] =
+                item.product_variant_id;
         });
-
+        
         smartSides?.forEach(variant => {
-            if (!resultMap[variant.rails_parent_id]) {
-                resultMap[variant.rails_parent_id] = variant.rails_variant_id;
+            if (!resultMap[variant.group_key]) {
+                resultMap[variant.group_key] =
+                    variant.rails_variant_id;
             }
         });
 
@@ -80,13 +83,14 @@ const BundleCard = ({
     // ✅ PRICING
     const pricing = useMemo(() => {
         let total = 0;
-
+    
         for (const item of activeItems) {
             const p = pantryMap[item.product_variant_id];
-            const unitPrice = p?.price > 0 ? p.price : parseFloat(item.price) || 0;
+            const unitPrice = p?.price || 0;
+    
             total += unitPrice * (item.quantity || 1);
         }
-
+    
         return {
             rawTotal: total,
             designedPrice: getDesignedBundlePrice(total, paxQuery)
@@ -187,7 +191,7 @@ const BundleCard = ({
                                 ? itemData.quantity
                                 : calculateSmartQuantity(pantryItem.pax, bundle.max_pax);
 
-                            const unitPrice = pantryItem.price || itemData?.price || 0;
+                            const unitPrice = pantryItem.price || 0;
                             const totalPrice = unitPrice * quantity;
 
                             return (
