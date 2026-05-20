@@ -48,9 +48,21 @@ export const getEditableVariants = (pantry, bundleMaxPax) => {
 
 export const calculateSmartQuantity = (variantPax, bundleMaxPax) => {
   if (!variantPax || variantPax <= 0) return 1;
-  // Pick the highest multiple that stays under or equal to the limit
-  const qty = Math.floor(bundleMaxPax / variantPax);
-  return qty > 0 ? qty : 1; 
+
+  let adjustedVariantPax = variantPax;
+
+  if (bundleMaxPax === 10) {
+    adjustedVariantPax += 0.5;
+  } else if (bundleMaxPax === 15) {
+    adjustedVariantPax += 1;
+  } else if (bundleMaxPax === 20) {
+    adjustedVariantPax += 1.5;
+  }
+
+  // Pick the highest multiple (round up)
+  const qty = Math.ceil(bundleMaxPax / adjustedVariantPax);
+
+  return qty > 0 ? qty : 1;
 };
 
 export const formatItemName = (variant, quantity) => {

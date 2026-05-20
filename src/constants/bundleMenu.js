@@ -4,7 +4,7 @@ export const HARDCODED_PANTRY = [
     rails_parent_id: 43,
     public_id: 'tls60wkpjkyqzkyb0rc3',
     variants: [
-      { name: "Steamed Siomai", mb_name: "Steamed Siomai Tub Spicy", rails_variant_id: 20, price: 100, pax: 3.5, count: 12 },
+      { name: "Steamed Siomai", mb_name: "Steamed Siomai Tub Spicy", rails_variant_id: 20, price: 100, pax: 3, count: 12 },
     ]
   },
   {
@@ -20,11 +20,11 @@ export const HARDCODED_PANTRY = [
     rails_parent_id: 10,
     public_id: 'v5ka545zjxkasejhml90',
     variants: [
-      { name: "Chicken Wings", mb_name: "Chicken Wings 10pcs Assorted", rails_variant_id: 57, price: 235, pax: 4, count: 10, isSoloOnly: true },
-      { name: "Chicken Wings", mb_name: "Chicken Wings 20pcs Assorted", rails_variant_id: 61, price: 450, pax: 8, count: 20, isPartySize: true },
-      { name: "Chicken Wings", mb_name: "Chicken Wings 30pcs Assorted", rails_variant_id: 80, price: 730, pax: 12, count: 30, isPartySize: true },
-      { name: "Chicken Wings", mb_name: "Chicken Wings 40pcs Assorted", rails_variant_id: 81, price: 900, pax: 16, count: 40, isPartySize: true },
-      { name: "Chicken Wings", mb_name: "Chicken Wings 50pcs Assorted", rails_variant_id: 82, price: 1100, pax: 20, count: 50, isPartySize: true },
+      { name: "Chicken Wings", mb_name: "Chicken Wings 10pcs Assorted", rails_variant_id: 57, price: 235, pax: 5, count: 10, isSoloOnly: true },
+      { name: "Chicken Wings", mb_name: "Chicken Wings 20pcs Assorted", rails_variant_id: 61, price: 450, pax: 10, count: 20, isPartySize: true },
+      { name: "Chicken Wings", mb_name: "Chicken Wings 30pcs Assorted", rails_variant_id: 80, price: 730, pax: 15, count: 30, isPartySize: true },
+      { name: "Chicken Wings", mb_name: "Chicken Wings 40pcs Assorted", rails_variant_id: 81, price: 900, pax: 20, count: 40, isPartySize: true },
+      { name: "Chicken Wings", mb_name: "Chicken Wings 50pcs Assorted", rails_variant_id: 82, price: 1100, pax: 25, count: 50, isPartySize: true },
     ]
   },
   {
@@ -32,8 +32,8 @@ export const HARDCODED_PANTRY = [
     rails_parent_id: 23,
     public_id: 'tswlxicsjvgewknlibdq',
     variants: [
-      { name: "Empanada", mb_name: "Empanada 5pcs", rails_variant_id: 68, price: 100, pax: 3, count: 5, isPartySize: true },
-      { name: "Empanada", mb_name: "Empanada 10pcs", rails_variant_id: 69, price: 200, pax: 6, count: 10, isSoloOnly: true },
+      { name: "Empanada", mb_name: "Empanada 5pcs", rails_variant_id: 68, price: 100, pax: 2, count: 5, isPartySize: true },
+      { name: "Empanada", mb_name: "Empanada 10pcs", rails_variant_id: 69, price: 200, pax: 5, count: 10, isSoloOnly: true },
     ]
   },
   {
@@ -41,19 +41,19 @@ export const HARDCODED_PANTRY = [
     rails_parent_id: 20,
     public_id: 'q2aow53houndsz29bz9j',
     variants: [
-      { name: "Set Chicken Fillet", mb_name: "Chicken Fillet Solo", price: 145, rails_variant_id: 65, pax: 4, isSoloOnly: true },
-      { name: "Small Bilao Chicken Fillet", mb_name: "Chicken Fillet Small", price: 320, rails_variant_id: 83, pax: 8, isPartySize: true },
-      { name: "Medium Bilao Chicken Fillet", mb_name: "Chicken Fillet Medium", price: 610, rails_variant_id: 84, pax: 16, isPartySize: true },
-      { name: "Large Bilao Chicken Fillet", mb_name: "Chicken Fillet Large", rails_variant_id: 85, price: 900, pax: 24, isPartySize: true },
-      { name: "XL Bilao Chicken Fillet", mb_name: "Chicken Fillet XL", rails_variant_id: 86, price: 1200, pax: 32, isPartySize: true },
+      { name: "Set Chicken Fillet", mb_name: "Chicken Fillet Solo", price: 145, rails_variant_id: 65, pax: 5, isSoloOnly: true },
+      { name: "Small Bilao Chicken Fillet", mb_name: "Chicken Fillet Small", price: 320, rails_variant_id: 83, pax: 10, isPartySize: true },
+      { name: "Medium Bilao Chicken Fillet", mb_name: "Chicken Fillet Medium", price: 610, rails_variant_id: 84, pax: 15, isPartySize: true },
+      { name: "Large Bilao Chicken Fillet", mb_name: "Chicken Fillet Large", rails_variant_id: 85, price: 900, pax: 20, isPartySize: true },
+      { name: "XL Bilao Chicken Fillet", mb_name: "Chicken Fillet XL", rails_variant_id: 86, price: 1200, pax: 25, isPartySize: true },
     ]
   },
   {
     product_name: "Shanghai",
-    rails_parent_id: 68,
+    rails_parent_id: 31,
     public_id: 'jq4njje4jyhhslp8umsh',
     variants: [
-      { name: "Shanghai", mb_name: "Shanghai 24pcs", rails_variant_id: 104, price: 170, pax: 5, count: 24 },
+      { name: "Shanghai", mb_name: "Shanghai 12pcs", rails_variant_id: 103, price: 85, pax: 3, count: 12 },
     ]
   },
   {
@@ -61,8 +61,8 @@ export const HARDCODED_PANTRY = [
     rails_parent_id: 48,
     public_id: 'dddndsrtzhs662weak9t',
     variants: [
-      { name: "Set Fish Fillet", mb_name: "Fish Fillet Solo", price: 130, rails_variant_id: 182, pax: 2.7, isSoloOnly: true },
-      { name: "Small Bilao Fish Fillet", mb_name: "Fish Fillet Bilao", price: 390, rails_variant_id: 198, pax: 9, isPartySize: true },
+      { name: "Set Fish Fillet", mb_name: "Fish Fillet Solo", price: 130, rails_variant_id: 182, pax: 5, isSoloOnly: true },
+      { name: "Small Bilao Fish Fillet", mb_name: "Fish Fillet Bilao", price: 390, rails_variant_id: 198, pax: 14, isPartySize: true },
     ]
   },
   {
@@ -70,7 +70,7 @@ export const HARDCODED_PANTRY = [
     rails_parent_id: 15,
     public_id: 'dnox9od3tjhz0swrut7j',
     variants: [
-      { name: "Puto", mb_name: "Puto Small 15pcs", rails_variant_id: 41, price: 135, pax: 6, count: 15 },
+      { name: "Puto", mb_name: "Puto Small 15pcs", rails_variant_id: 41, price: 135, pax: 7, count: 15 },
     ]
   },
   {
