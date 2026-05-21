@@ -4,13 +4,13 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 /* ============================================================
    1. LAZY LOADING
    This splits your app into smaller pieces. 
-   Users only download the "BundleList" when they go to that page.
-   They NEVER download "BundleBuilder" (saving bandwidth).
+   Users only download the pages they actually visit, saving bandwidth.
    ============================================================ */
 const PaxSelector = lazy(() => import('./pages/PaxSelector'));
 const BundleList = lazy(() => import('./pages/BundleList'));
 const BundleBuilder = lazy(() => import('./pages/BundleBuilder'));
 const EditBundle = lazy(() => import('./pages/BundleEditor'));
+const OurStory = lazy(() => import('./pages/OurStory')); // New Brand Page Added
 
 /* ============================================================
    2. PRE-FETCH TRIGGER
@@ -18,7 +18,7 @@ const EditBundle = lazy(() => import('./pages/BundleEditor'));
    while the user is still looking at the Pax selection.
    ============================================================ */
 export const preloadBundlePage = () => {
-  const component = import('./pages/BundleList');
+  import('./pages/BundleList');
   // You can also pre-fetch the API here if you want to be extra fast
 };
 
@@ -32,6 +32,9 @@ function App() {
         <Routes>
           {/* Landing Page */}
           <Route path="/" element={<PaxSelector />} />
+          
+          {/* Brand/Heritage Page */}
+          <Route path="/our-story" element={<OurStory />} />
           
           {/* Customer Facing Bundle List */}
           <Route path="/bundles" element={<BundleList />} />
