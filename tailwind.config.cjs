@@ -1,5 +1,5 @@
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
   content: [
     "./index.html",
     "./src/**/*.{js,ts,jsx,tsx}",
@@ -9,7 +9,6 @@ export default {
       fontFamily: {
         sans: ['Montserrat', 'sans-serif'],
       },
-      // Adding the floating animation logic here
       keyframes: {
         float: {
           '0%, 100%': { transform: 'translateY(0)' },
@@ -19,7 +18,6 @@ export default {
       animation: {
         float: 'float 4s ease-in-out infinite',
       },
-      // Adding a custom drop shadow for the logo
       dropShadow: {
         'logo': '0 10px 10px rgba(0, 0, 0, 0.5)',
       }
