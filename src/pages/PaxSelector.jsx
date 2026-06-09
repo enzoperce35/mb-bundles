@@ -28,7 +28,7 @@ const PaxSelector = () => {
   };
 
   return (
-    <div className="relative min-h-screen w-full font-sans">
+    <div className="relative min-h-screen w-full font-sans flex flex-col">
       {/* OPTIMIZED BACKGROUND */}
       <div
         className="fixed inset-0 bg-[url('https://images.unsplash.com/photo-1516062423079-7ca13cdc7f5a?auto=format&fit=crop&w=1200&q=60')] bg-cover bg-center"
@@ -37,10 +37,11 @@ const PaxSelector = () => {
         <div className="absolute inset-0 bg-black/50 backdrop-blur-md"></div>
       </div>
 
-      <div className="relative z-10 w-full max-w-6xl mx-auto px-6 pt-6 pb-25 flex flex-col items-center">
+      {/* FIXED CONTENT LAYER: Changed pb-25 to pb-16 md:pb-24 to use compilation-safe dimensions */}
+      <div className="relative z-10 w-full max-w-6xl mx-auto px-6 pt-6 pb-16 md:pb-24 flex-grow flex flex-col items-center">
 
         {/* TOP RIGHT NAVIGATION LAYER */}
-        <div className="w-full flex justify-end mb-4">
+        <div className="w-full flex justify-end mb-12">
           <Link
             to="/our-story"
             className="flex items-center gap-2 text-white/80 hover:text-white text-xs font-bold uppercase tracking-widest px-4 py-2 rounded-full border border-white/20 hover:border-white/60 bg-white/5 hover:bg-white/10 backdrop-blur-sm transition-all duration-300 hover:scale-105 active:scale-95"
@@ -51,11 +52,11 @@ const PaxSelector = () => {
         </div>
 
         <header className="text-center mb-16 flex flex-col items-center">
-          <div className="mb-3 animate-float">
+          <div className="mb-3 flex justify-center">
             <img
               src={logo}
               alt="Ma'Donna Delicacies Logo"
-              className="w-50 md:w-40 h-auto drop-shadow-logo"
+              className="w-29 md:w-40 h-auto drop-shadow-logo"
             />
           </div>
 
@@ -103,7 +104,8 @@ const PaxSelector = () => {
           ))}
         </div>
 
-        <footer className="mt-20 text-white/40 text-[10px] font-black uppercase tracking-[0.4em]">
+        {/* FIXED FOOTER MARGIN: Added mt-auto and a dedicated py-6 wrapper for clear safe-area spacing */}
+        <footer className="mt-auto pt-16 pb-4 text-white/40 text-[10px] font-black uppercase tracking-[0.4em] text-center">
           Madonna Delicacies • Since 2020
         </footer>
       </div>

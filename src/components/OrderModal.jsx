@@ -44,7 +44,7 @@ const OrderModal = ({ isOpen, step, onCopy, onOpenMessenger, onClose }) => {
                 </div>
               </div>
             </div>
-            <button onClick={onClose} className="w-full text-gray-400 text-xs text-center uppercase tracking-widest hover:text-gray-600 transition-colors">Close Instructions</button>
+            <button onClick={onClose} className="w-full text-gray-400 text-xs text-center uppercase tracking-widest hover:text-gray-600 transition-colors">Cancel</button>
           </div>
         )}
 

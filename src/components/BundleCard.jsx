@@ -42,11 +42,11 @@ const BundleCard = ({
         activeItems.forEach(item => {
             const p = pantryMap[item.product_variant_id];
             if (!p) return;
-        
+
             resultMap[p.group_key] =
                 item.product_variant_id;
         });
-        
+
         smartSides?.forEach(variant => {
             if (!resultMap[variant.group_key]) {
                 resultMap[variant.group_key] =
@@ -83,14 +83,14 @@ const BundleCard = ({
     // ✅ PRICING
     const pricing = useMemo(() => {
         let total = 0;
-    
+
         for (const item of activeItems) {
             const p = pantryMap[item.product_variant_id];
             const unitPrice = p?.price || 0;
-    
+
             total += unitPrice * (item.quantity || 1);
         }
-    
+
         return {
             rawTotal: total,
             designedPrice: getDesignedBundlePrice(total, paxQuery)
@@ -103,25 +103,21 @@ const BundleCard = ({
             {/* HEADER */}
             <div className="p-8 pb-0">
                 <div className="flex justify-between items-start mb-4 Montserrat">
-                    
-                    {/* BUTTON WRAPPER MARKER */}
-                    <div className="relative inline-block">
-                        
+                    <div className="relative flex flex-col items-center w-fit">
+
                         {/* PURE CSS PINNED JUMPING TOOLTIP */}
                         {isOnboardingTarget && (
-                            <div 
-                                onClick={(e) => { 
-                                    e.stopPropagation(); 
-                                    dismissOnboarding(); 
+                            <div
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    dismissOnboarding();
                                 }}
-                                /* FIXED: Adjusted bottom positioning value from bottom-full to -bottom-1 to shift the indicator downwards */
-                                className="absolute -bottom-1 left-1/2 -translate-x-1/2 pb-7 flex flex-col items-center animate-bounce cursor-pointer"
-                                style={{ transform: 'translate(-50%, -100%)' }}
+                                className="absolute bottom-full mb-1 flex flex-col items-center animate-bounce cursor-pointer z-50 whitespace-nowrap"
                             >
-                                <div className="bg-orange-500 text-stone-900 font-black text-[10px] px-3 py-1.5 rounded-xl uppercase tracking-wider whitespace-nowrap shadow-xl shadow-orange-500/30 Montserrat">
-                                   Click this to customize items!
+                                <div className="bg-orange-500 text-stone-900 font-black text-[10px] px-3 py-1.5 rounded-xl uppercase tracking-wider shadow-xl shadow-orange-500/30 Montserrat">
+                                    Click this to customize items!
                                 </div>
-                                <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[10px] border-t-orange-500 -mt-[1px]" />
+                                <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[6px] border-t-orange-500" />
                             </div>
                         )}
 
@@ -130,8 +126,8 @@ const BundleCard = ({
                                 if (isOnboardingTarget) dismissOnboarding();
                                 setEditingId(isEditing ? null : bundle.id);
                             }}
-                            className={`flex items-center gap-2 text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest transition-all 
-                                ${isEditing
+                            className={`flex items-center gap-2 text-[9px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest transition-all whitespace-nowrap
+                    ${isEditing
                                     ? 'bg-orange-600 text-white animate-pulse'
                                     : 'bg-emerald-800 text-white hover:bg-emerald-700'
                                 }`}
