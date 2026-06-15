@@ -112,7 +112,8 @@ const BundleCard = ({
                                     e.stopPropagation();
                                     dismissOnboarding();
                                 }}
-                                className="absolute bottom-full mb-1 flex flex-col items-center animate-bounce cursor-pointer z-50 whitespace-nowrap"
+                                /* Updated to animate-snap-bounce */
+                                className="absolute bottom-full mb-1 flex flex-col items-center animate-snap-bounce cursor-pointer z-50 whitespace-nowrap"
                             >
                                 <div className="bg-orange-500 text-stone-900 font-black text-[10px] px-3 py-1.5 rounded-xl uppercase tracking-wider shadow-xl shadow-orange-500/30 Montserrat">
                                     Click this to customize items!

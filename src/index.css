@@ -8,6 +8,23 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes crisp-snap-bounce {
+  0%, 100% {
+    transform: translateY(0);
+    /* Extreme acceleration downwards */
+    animation-timing-function: cubic-bezier(0.3, 0, 0, 0);
+  }
+  45% {
+    transform: translateY(-20px); /* High peak */
+    /* Snappy change of direction at the top */
+    animation-timing-function: cubic-bezier(0, 0, 0, 0.9);
+  }
+}
+
+.animate-snap-bounce {
+  animation: crisp-snap-bounce 1.2s infinite;
+}
+
 .bg-wood {
   background-image: url('https://images.unsplash.com/photo-1516062423079-7ca13cdc7f5a?q=80&w=2083');
   background-size: cover;
