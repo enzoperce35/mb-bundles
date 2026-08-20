@@ -175,7 +175,10 @@ const BundleCard = ({
                         )}
                     </div>
 
-                    <ul className="space-y-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar Montserrat">
+                    <ul
+                        className={`space-y-2 pr-2 transition-all duration-300 ${isEditing ? '' : 'max-h-[400px] overflow-y-auto custom-scrollbar'
+                            }`}
+                    >
                         {itemsToShow.map(variantId => {
                             const pantryItem = pantryMap[variantId];
                             if (!pantryItem) return null;
